@@ -1062,7 +1062,8 @@ input, textarea, select { font-family: inherit; -webkit-appearance: none; }
   /* Public nav */
   .pub-nav { display: none; }
   .hamburger { display: flex; }
-  .pub-header-actions .btn-primary { display: none; }
+  .pub-header-actions .btn-ghost { display: none; }
+  .pub-header-actions .btn-primary { padding: 8px 12px; font-size: 0.75rem; }
   /* Footer */
   .pub-footer-inner { grid-template-columns: 1fr 1fr; }
   .pub-footer-brand { grid-column: 1 / -1; }
