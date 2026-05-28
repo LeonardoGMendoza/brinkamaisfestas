@@ -375,6 +375,7 @@ input, textarea, select { font-family: inherit; -webkit-appearance: none; }
   transition: var(--t);
   min-height: 38px;
   display: flex; align-items: center;
+  white-space: nowrap;
 }
 .pub-nav-link:hover { color: var(--text); background: var(--glass-light); }
 .pub-nav-link.active { color: var(--purple); background: rgba(168,85,247,0.1); }
