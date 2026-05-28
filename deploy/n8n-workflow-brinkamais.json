@@ -192,7 +192,7 @@
       "parameters": {
         "conditions": {
           "options": {
-            "caseSensitive": true,
+            "caseSensitive": false,
             "leftValue": "",
             "typeValidation": "loose",
             "version": 3
@@ -200,11 +200,11 @@
           "conditions": [
             {
               "id": "cond-not-me",
-              "leftValue": "={{ $json.body.fromMe }}",
-              "rightValue": "false",
+              "leftValue": "={{ $json.body.isGroup === false && $json.body.fromMe === false && ( ($json.body.text?.message || '').toLowerCase().includes('brinka') || ($json.body.text?.message || '').toLowerCase().includes('festa') || ($json.body.text?.message || '').toLowerCase().includes('orçament') || ($json.body.text?.message || '').toLowerCase().includes('aluguel') || ($json.body.text?.message || '').toLowerCase().includes('brinquedo') || ($json.body.text?.message || '').toLowerCase().includes('olá! vim pelo site') ) }}",
+              "rightValue": "true",
               "operator": {
                 "type": "boolean",
-                "operation": "false",
+                "operation": "true",
                 "singleValue": true
               }
             }
