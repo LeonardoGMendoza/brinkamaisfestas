@@ -12,7 +12,10 @@
       "name": "Webhook — Enviar Mensagem WA",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 300],
+      "position": [
+        240,
+        300
+      ],
       "webhookId": "brinkamais-enviar"
     },
     {
@@ -22,15 +25,27 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "Client-Token", "value": "Fc371b3a898d5425585d9e77e49e044eaS" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Client-Token",
+              "value": "Fc371b3a898d5425585d9e77e49e044eaS"
+            }
           ]
         },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "phone", "value": "=55{{ $json.body.numero }}" },
-            { "name": "message", "value": "={{ $json.body.mensagem }}" }
+            {
+              "name": "phone",
+              "value": "=55{{ $json.body.numero }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.body.mensagem }}"
+            }
           ]
         },
         "options": {}
@@ -39,7 +54,10 @@
       "name": "Z-API — Enviar Mensagem",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [460, 300]
+      "position": [
+        460,
+        300
+      ]
     },
     {
       "parameters": {
@@ -50,7 +68,10 @@
       "name": "Resposta — Envio OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [680, 300]
+      "position": [
+        680,
+        300
+      ]
     },
     {
       "parameters": {
@@ -63,7 +84,10 @@
       "name": "Webhook — Agente IA",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 560],
+      "position": [
+        240,
+        560
+      ],
       "webhookId": "brinkamais-ia"
     },
     {
@@ -78,7 +102,10 @@
       "name": "Agente IA — Brinka",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
-      "position": [460, 560]
+      "position": [
+        460,
+        560
+      ]
     },
     {
       "parameters": {
@@ -89,7 +116,10 @@
       "name": "Groq — llama-3.1-8b-instant",
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
-      "position": [460, 780],
+      "position": [
+        460,
+        780
+      ],
       "credentials": {
         "groqApi": {
           "id": "wrB7boS5AADQ1Fno",
@@ -106,7 +136,10 @@
       "name": "Memória da Conversa",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
-      "position": [620, 780]
+      "position": [
+        620,
+        780
+      ]
     },
     {
       "parameters": {
@@ -116,7 +149,10 @@
       "name": "Formatar Resposta IA",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [700, 560]
+      "position": [
+        700,
+        560
+      ]
     },
     {
       "parameters": {
@@ -127,7 +163,10 @@
       "name": "Resposta — IA Gerada",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [900, 560]
+      "position": [
+        900,
+        560
+      ]
     },
     {
       "parameters": {
@@ -140,7 +179,10 @@
       "name": "Webhook — Salvar Anotação",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 860],
+      "position": [
+        240,
+        860
+      ],
       "webhookId": "brinkamais-anotacao"
     },
     {
@@ -153,7 +195,10 @@
       "name": "PostgreSQL — Salvar Anotação",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [460, 860],
+      "position": [
+        460,
+        860
+      ],
       "credentials": {
         "postgres": {
           "id": "70aBdY73eHvAkXwu",
@@ -170,7 +215,10 @@
       "name": "Resposta — Anotação Salva",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [680, 860]
+      "position": [
+        680,
+        860
+      ]
     },
     {
       "parameters": {
@@ -182,7 +230,10 @@
       "name": "Webhook — Receber Msg WA",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [240, 1160],
+      "position": [
+        240,
+        1160
+      ],
       "webhookId": "brinkamais-wa-receber"
     },
     {
@@ -199,13 +250,21 @@
               "id": "c1",
               "leftValue": "={{ $json.body.isGroup === false }}",
               "rightValue": "true",
-              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
             },
             {
               "id": "c2",
               "leftValue": "={{ $json.body.fromMe === false }}",
               "rightValue": "true",
-              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
             }
           ],
           "combinator": "and"
@@ -216,7 +275,10 @@
       "name": "Ignorar Grupos e Mim",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [460, 1160]
+      "position": [
+        460,
+        1160
+      ]
     },
     {
       "parameters": {
@@ -228,7 +290,10 @@
       "name": "Verificar Conversa",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [680, 1140],
+      "position": [
+        680,
+        1140
+      ],
       "credentials": {
         "postgres": {
           "id": "70aBdY73eHvAkXwu",
@@ -250,13 +315,21 @@
               "id": "c3",
               "leftValue": "={{ ($('Webhook — Receber Msg WA').item.json.body.text?.message || '').toLowerCase().includes('brinka') || ($('Webhook — Receber Msg WA').item.json.body.text?.message || '').toLowerCase().includes('festa') || ($('Webhook — Receber Msg WA').item.json.body.text?.message || '').toLowerCase().includes('orçament') || ($('Webhook — Receber Msg WA').item.json.body.text?.message || '').toLowerCase().includes('aluguel') || ($('Webhook — Receber Msg WA').item.json.body.text?.message || '').toLowerCase().includes('brinquedo') || ($('Webhook — Receber Msg WA').item.json.body.text?.message || '').toLowerCase().includes('olá! vim pelo site') }}",
               "rightValue": "true",
-              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
             },
             {
               "id": "c4",
               "leftValue": "={{ $json.id !== undefined }}",
               "rightValue": "true",
-              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
             }
           ],
           "combinator": "or"
@@ -267,7 +340,10 @@
       "name": "Palavra-Chave ou Conversa",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [900, 1140]
+      "position": [
+        900,
+        1140
+      ]
     },
     {
       "parameters": {
@@ -279,7 +355,10 @@
       "name": "PostgreSQL — Registrar Msg",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [1120, 1120],
+      "position": [
+        1120,
+        1120
+      ],
       "credentials": {
         "postgres": {
           "id": "70aBdY73eHvAkXwu",
@@ -292,14 +371,17 @@
         "promptType": "define",
         "text": "={{ $('Webhook — Receber Msg WA').item.json.body.text.message }}",
         "options": {
-          "systemMessage": "Você é um assistente de atendimento da Brinka Mais Festas, empresa de aluguel de brinquedos para festas infantis. Responda de forma simpática e objetiva.\nNossos brinquedos:\n🏰 Pula-Pula Castelo (R$ 250/dia)\n🛝 Escorregador Inflável (R$ 220/dia)\n⚽ Totó/Pebolim (R$ 150/dia)\n🔵 Piscina de Bolinhas (R$ 130/dia)\n🥅 Gol de Futebol (R$ 100/dia)\n🤸 Cama Elástica (R$ 200/dia).\n\nQuando o cliente quiser fechar negócio, confirme se você já tem as seguintes informações: 1) Qual o brinquedo? 2) Data da festa? (formato YYYY-MM-DD) 3) Endereço completo do evento? 4) Quantas crianças?. Se faltar alguma, pergunte amigavelmente.\nQuando você tiver todas essas respostas, diga que um atendente humano vai assumir para finalizar o contrato, e OBRIGATORIAMENTE termine sua mensagem com o seguinte bloco exato:\n[FECHAR_PEDIDO]\nBrinquedo: <nome do brinquedo>\nData: <data no formato YYYY-MM-DD>\nEndereço: <endereço completo>\nCriancas: <quantidade>\nObs: <qualquer detalhe>\n[/FECHAR_PEDIDO]"
+          "systemMessage": "Você é um assistente de atendimento da Brinka Mais Festas, empresa de aluguel de brinquedos para festas infantis. Responda de forma simpática, alegre e objetiva.\n\nApresente nossos brinquedos em uma lista numerada para o cliente escolher pelo número:\n1️⃣ Pula-Pula Castelo (R$ 250/dia)\n2️⃣ Escorregador Inflável (R$ 220/dia)\n3️⃣ Totó/Pebolim (R$ 150/dia)\n4️⃣ Piscina de Bolinhas (R$ 130/dia)\n5️⃣ Gol de Futebol (R$ 100/dia)\n6️⃣ Cama Elástica (R$ 200/dia)\n7️⃣ Pacote Completo (vários itens) - consulte valor!\n\nQuando o cliente escolher, colete naturalmente (em uma conversa leve):\n- Data da festa (você converterá internamente para YYYY-MM-DD, nunca fale esse formato para o cliente)\n- Endereço completo com CEP (ex: 'Para onde vamos levar a diversão? Me passa o endereço completo com CEP, por favor!')\n- Quantas crianças participarão\n\nQuando tiver todos os dados, apresente um Resumo do Orçamento bem organizado com o valor total e pergunte exatamente: 'Responda SIM para confirmar e gerar o PIX'.\n\nSe o cliente responder SIM, envie a chave PIX CPF 74163884149 e peça para ele enviar o comprovante.\n\nQuando o cliente disser que pagou ou enviar o comprovante, agradeça com muita festa, informe que o humano vai conferir o PIX para liberar o pedido e, OBRIGATORIAMENTE, termine sua ÚLTIMA mensagem com o seguinte bloco exato:\n[FECHAR_PEDIDO]\nBrinquedo: <nome do brinquedo>\nData: <data no formato YYYY-MM-DD>\nEndereço: <endereço completo>\nCriancas: <quantidade>\nObs: <qualquer detalhe extra>\n[/FECHAR_PEDIDO]"
         }
       },
       "id": "bm-ai-auto",
       "name": "IA Auto — Resposta Automática",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
-      "position": [1340, 1120]
+      "position": [
+        1340,
+        1120
+      ]
     },
     {
       "parameters": {
@@ -310,7 +392,10 @@
       "name": "Groq — Auto",
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
-      "position": [1320, 1340],
+      "position": [
+        1320,
+        1340
+      ],
       "credentials": {
         "groqApi": {
           "id": "wrB7boS5AADQ1Fno",
@@ -327,7 +412,10 @@
       "name": "Memória por Cliente",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
-      "position": [1480, 1340]
+      "position": [
+        1480,
+        1340
+      ]
     },
     {
       "parameters": {
@@ -343,7 +431,11 @@
               "id": "c5",
               "leftValue": "={{ $json.output.includes(\"[FECHAR_PEDIDO]\") }}",
               "rightValue": "true",
-              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
             }
           ],
           "combinator": "and"
@@ -354,7 +446,10 @@
       "name": "Verificar Fechamento Pedido",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [1580, 1120]
+      "position": [
+        1580,
+        1120
+      ]
     },
     {
       "parameters": {
@@ -364,19 +459,25 @@
       "name": "Extrair Dados Pedido",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1800, 1020]
+      "position": [
+        1800,
+        1020
+      ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "CREATE TABLE IF NOT EXISTS pedidos ( id SERIAL PRIMARY KEY, cliente_nome VARCHAR(100) NOT NULL, cliente_tel VARCHAR(100), item VARCHAR(200), data_festa DATE, local_evento TEXT, num_criancas INTEGER, status VARCHAR(20) DEFAULT 'pendente' CHECK (status IN ('pendente', 'aguardando', 'confirmado', 'cancelado')), obs TEXT, atendente VARCHAR(100), criado_em TIMESTAMP DEFAULT NOW(), atualizado_em TIMESTAMP DEFAULT NOW() ); ALTER TABLE pedidos ALTER COLUMN cliente_tel TYPE VARCHAR(100); INSERT INTO pedidos (cliente_nome, cliente_tel, item, data_festa, local_evento, num_criancas, status, obs) VALUES ('{{ $json.cliente_nome }}', '{{ $json.cliente_tel }}', '{{ $json.brinquedo }}', {{ $json.dataSql }}, '{{ $json.endereco }}', {{ $json.criancas }}, 'pendente', '{{ $json.obs }}');",
+        "query": "CREATE TABLE IF NOT EXISTS pedidos ( id SERIAL PRIMARY KEY, cliente_nome VARCHAR(100) NOT NULL, cliente_tel VARCHAR(100), item VARCHAR(200), data_festa DATE, local_evento TEXT, num_criancas INTEGER, status VARCHAR(20) DEFAULT 'aguardando' CHECK (status IN ('aguardando', 'aguardando', 'confirmado', 'cancelado')), obs TEXT, atendente VARCHAR(100), criado_em TIMESTAMP DEFAULT NOW(), atualizado_em TIMESTAMP DEFAULT NOW() ); ALTER TABLE pedidos ALTER COLUMN cliente_tel TYPE VARCHAR(100); INSERT INTO pedidos (cliente_nome, cliente_tel, item, data_festa, local_evento, num_criancas, status, obs) VALUES ('{{ $json.cliente_nome }}', '{{ $json.cliente_tel }}', '{{ $json.brinquedo }}', {{ $json.dataSql }}, '{{ $json.endereco }}', {{ $json.criancas }}, 'aguardando', '{{ $json.obs }}');",
         "options": {}
       },
       "id": "bm-pg-salvar-pedido",
       "name": "PostgreSQL — Salvar Pedido",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [2020, 1020],
+      "position": [
+        2020,
+        1020
+      ],
       "credentials": {
         "postgres": {
           "id": "70aBdY73eHvAkXwu",
@@ -391,15 +492,27 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "Client-Token", "value": "Fc371b3a898d5425585d9e77e49e044eaS" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Client-Token",
+              "value": "Fc371b3a898d5425585d9e77e49e044eaS"
+            }
           ]
         },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "phone", "value": "5511989553812" },
-            { "name": "message", "value": "=🐟 CAIU UM PEIXE NA REDE! 🐟\nNovo pedido fechado no WhatsApp!\n\n👤 Cliente: {{ $('Webhook — Receber Msg WA').item.json.body.senderName }}\n🧸 Brinquedo: {{ $('Extrair Dados Pedido').item.json.brinquedo }}\n📅 Data: {{ $('Extrair Dados Pedido').item.json.dataSql }}\n📍 Local: {{ $('Extrair Dados Pedido').item.json.endereco }}\n👧 Crianças: {{ $('Extrair Dados Pedido').item.json.criancas }}\n\nEntre no painel para assumir o atendimento!" }
+            {
+              "name": "phone",
+              "value": "5511989553812"
+            },
+            {
+              "name": "message",
+              "value": "=🐟 CAIU UM PEIXE NA REDE! 🐟\nNovo pedido fechado no WhatsApp!\n\n👤 Cliente: {{ $('Webhook — Receber Msg WA').item.json.body.senderName }}\n🧸 Brinquedo: {{ $('Extrair Dados Pedido').item.json.brinquedo }}\n📅 Data: {{ $('Extrair Dados Pedido').item.json.dataSql }}\n📍 Local: {{ $('Extrair Dados Pedido').item.json.endereco }}\n👧 Crianças: {{ $('Extrair Dados Pedido').item.json.criancas }}\n\nEntre no painel para assumir o atendimento!"
+            }
           ]
         },
         "options": {}
@@ -408,7 +521,10 @@
       "name": "Z-API — Avisar Admin",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2240, 1020]
+      "position": [
+        2240,
+        1020
+      ]
     },
     {
       "parameters": {
@@ -418,7 +534,10 @@
       "name": "Limpar Mensagem IA",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2460, 1020]
+      "position": [
+        2460,
+        1020
+      ]
     },
     {
       "parameters": {
@@ -427,15 +546,27 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "Client-Token", "value": "Fc371b3a898d5425585d9e77e49e044eaS" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Client-Token",
+              "value": "Fc371b3a898d5425585d9e77e49e044eaS"
+            }
           ]
         },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "phone", "value": "={{ $('Webhook — Receber Msg WA').item.json.body.phone }}" },
-            { "name": "message", "value": "={{ $json.message }}" }
+            {
+              "name": "phone",
+              "value": "={{ $('Webhook — Receber Msg WA').item.json.body.phone }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.message }}"
+            }
           ]
         },
         "options": {}
@@ -444,7 +575,10 @@
       "name": "Z-API — Resposta Final Cliente",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [2680, 1020]
+      "position": [
+        2680,
+        1020
+      ]
     },
     {
       "parameters": {
@@ -453,15 +587,27 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "Client-Token", "value": "Fc371b3a898d5425585d9e77e49e044eaS" }
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Client-Token",
+              "value": "Fc371b3a898d5425585d9e77e49e044eaS"
+            }
           ]
         },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "phone", "value": "={{ $('Webhook — Receber Msg WA').item.json.body.phone }}" },
-            { "name": "message", "value": "={{ $node['IA Auto — Resposta Automática'].json.output }}" }
+            {
+              "name": "phone",
+              "value": "={{ $('Webhook — Receber Msg WA').item.json.body.phone }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $node['IA Auto — Resposta Automática'].json.output }}"
+            }
           ]
         },
         "options": {}
@@ -470,31 +616,263 @@
       "name": "Z-API — Enviar Resposta Auto",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1800, 1280]
+      "position": [
+        1800,
+        1280
+      ]
     }
   ],
   "connections": {
-    "Webhook — Enviar Mensagem WA": { "main": [ [ { "node": "Z-API — Enviar Mensagem", "type": "main", "index": 0 } ] ] },
-    "Z-API — Enviar Mensagem": { "main": [ [ { "node": "Resposta — Envio OK", "type": "main", "index": 0 } ] ] },
-    "Webhook — Agente IA": { "main": [ [ { "node": "Agente IA — Brinka", "type": "main", "index": 0 } ] ] },
-    "Agente IA — Brinka": { "main": [ [ { "node": "Formatar Resposta IA", "type": "main", "index": 0 } ] ] },
-    "Groq — llama-3.1-8b-instant": { "ai_languageModel": [ [ { "node": "Agente IA — Brinka", "type": "ai_languageModel", "index": 0 } ] ] },
-    "Memória da Conversa": { "ai_memory": [ [ { "node": "Agente IA — Brinka", "type": "ai_memory", "index": 0 } ] ] },
-    "Formatar Resposta IA": { "main": [ [ { "node": "Resposta — IA Gerada", "type": "main", "index": 0 } ] ] },
-    "Webhook — Salvar Anotação": { "main": [ [ { "node": "PostgreSQL — Salvar Anotação", "type": "main", "index": 0 } ] ] },
-    "PostgreSQL — Salvar Anotação": { "main": [ [ { "node": "Resposta — Anotação Salva", "type": "main", "index": 0 } ] ] },
-    "Webhook — Receber Msg WA": { "main": [ [ { "node": "Ignorar Grupos e Mim", "type": "main", "index": 0 } ] ] },
-    "Ignorar Grupos e Mim": { "main": [ [ { "node": "Verificar Conversa", "type": "main", "index": 0 } ], [] ] },
-    "Verificar Conversa": { "main": [ [ { "node": "Palavra-Chave ou Conversa", "type": "main", "index": 0 } ] ] },
-    "Palavra-Chave ou Conversa": { "main": [ [ { "node": "PostgreSQL — Registrar Msg", "type": "main", "index": 0 } ], [] ] },
-    "PostgreSQL — Registrar Msg": { "main": [ [ { "node": "IA Auto — Resposta Automática", "type": "main", "index": 0 } ] ] },
-    "IA Auto — Resposta Automática": { "main": [ [ { "node": "Verificar Fechamento Pedido", "type": "main", "index": 0 } ] ] },
-    "Groq — Auto": { "ai_languageModel": [ [ { "node": "IA Auto — Resposta Automática", "type": "ai_languageModel", "index": 0 } ] ] },
-    "Memória por Cliente": { "ai_memory": [ [ { "node": "IA Auto — Resposta Automática", "type": "ai_memory", "index": 0 } ] ] },
-    "Verificar Fechamento Pedido": { "main": [ [ { "node": "Extrair Dados Pedido", "type": "main", "index": 0 } ], [ { "node": "Z-API — Enviar Resposta Auto", "type": "main", "index": 0 } ] ] },
-    "Extrair Dados Pedido": { "main": [ [ { "node": "PostgreSQL — Salvar Pedido", "type": "main", "index": 0 } ] ] },
-    "PostgreSQL — Salvar Pedido": { "main": [ [ { "node": "Z-API — Avisar Admin", "type": "main", "index": 0 } ] ] },
-    "Z-API — Avisar Admin": { "main": [ [ { "node": "Limpar Mensagem IA", "type": "main", "index": 0 } ] ] },
-    "Limpar Mensagem IA": { "main": [ [ { "node": "Z-API — Resposta Final Cliente", "type": "main", "index": 0 } ] ] }
+    "Webhook — Enviar Mensagem WA": {
+      "main": [
+        [
+          {
+            "node": "Z-API — Enviar Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Z-API — Enviar Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Resposta — Envio OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook — Agente IA": {
+      "main": [
+        [
+          {
+            "node": "Agente IA — Brinka",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente IA — Brinka": {
+      "main": [
+        [
+          {
+            "node": "Formatar Resposta IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq — llama-3.1-8b-instant": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente IA — Brinka",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memória da Conversa": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente IA — Brinka",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar Resposta IA": {
+      "main": [
+        [
+          {
+            "node": "Resposta — IA Gerada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook — Salvar Anotação": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL — Salvar Anotação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL — Salvar Anotação": {
+      "main": [
+        [
+          {
+            "node": "Resposta — Anotação Salva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook — Receber Msg WA": {
+      "main": [
+        [
+          {
+            "node": "Ignorar Grupos e Mim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ignorar Grupos e Mim": {
+      "main": [
+        [
+          {
+            "node": "Verificar Conversa",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Verificar Conversa": {
+      "main": [
+        [
+          {
+            "node": "Palavra-Chave ou Conversa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Palavra-Chave ou Conversa": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL — Registrar Msg",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "PostgreSQL — Registrar Msg": {
+      "main": [
+        [
+          {
+            "node": "IA Auto — Resposta Automática",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IA Auto — Resposta Automática": {
+      "main": [
+        [
+          {
+            "node": "Verificar Fechamento Pedido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq — Auto": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "IA Auto — Resposta Automática",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memória por Cliente": {
+      "ai_memory": [
+        [
+          {
+            "node": "IA Auto — Resposta Automática",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Fechamento Pedido": {
+      "main": [
+        [
+          {
+            "node": "Extrair Dados Pedido",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Z-API — Enviar Resposta Auto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrair Dados Pedido": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL — Salvar Pedido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL — Salvar Pedido": {
+      "main": [
+        [
+          {
+            "node": "Z-API — Avisar Admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Z-API — Avisar Admin": {
+      "main": [
+        [
+          {
+            "node": "Limpar Mensagem IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpar Mensagem IA": {
+      "main": [
+        [
+          {
+            "node": "Z-API — Resposta Final Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   }
 }
