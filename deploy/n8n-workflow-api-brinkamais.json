@@ -136,6 +136,278 @@
         600,
         400
       ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "brinkamais-conversas",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "d6063be5-508b-402b-a22a-b1852c8712ac",
+      "name": "Webhook — Obter Conversas",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        600
+      ],
+      "webhookId": "9d376185-2060-4021-8496-d7d51ccfda57"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT c.*, (SELECT conteudo FROM mensagens_brinka m WHERE m.numero = c.numero ORDER BY id DESC LIMIT 1) as ultimo_conteudo FROM conversas_brinka c ORDER BY c.ultimo_contato DESC;",
+        "options": {}
+      },
+      "id": "8dc52c4e-9754-448b-973b-79f82998aadd",
+      "name": "Postgres — Conversas",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        400,
+        600
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "70aBdY73eHvAkXwu",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, OPTIONS"
+              }
+            ]
+          }
+        }
+      },
+      "id": "04d02e63-1484-4b8e-8a37-8ed22f68ae99",
+      "name": "Resposta — Conversas",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "brinkamais-mensagens",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "4b9d734a-6e9e-441e-851e-475dbae9bf2d",
+      "name": "Webhook — Obter Mensagens",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        800
+      ],
+      "webhookId": "717ff969-dbd1-4dac-84cf-d198504257ba"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM mensagens_brinka WHERE numero = '{{ $json.query.numero }}' ORDER BY id ASC;",
+        "options": {}
+      },
+      "id": "f3e17147-4956-4078-bb3d-78ca84294736",
+      "name": "Postgres — Mensagens",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        400,
+        800
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "70aBdY73eHvAkXwu",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, OPTIONS"
+              }
+            ]
+          }
+        }
+      },
+      "id": "34af0c7e-4a8c-4b56-8b1b-68502cfe5206",
+      "name": "Resposta — Mensagens",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "brinkamais-cadastrar-cliente",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "14f4777d-5ab9-4071-90c8-9a9331f470ac",
+      "name": "Webhook — Cadastrar Cliente",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        1000
+      ],
+      "webhookId": "1e34ad44-9f3f-494e-9950-58f9e4612cbb"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE IF NOT EXISTS clientes ( id SERIAL PRIMARY KEY, nome VARCHAR(100), email VARCHAR(100) UNIQUE, telefone VARCHAR(100), senha VARCHAR(100), criado_em TIMESTAMP DEFAULT NOW() ); INSERT INTO clientes (nome, email, telefone, senha) VALUES ('{{ $json.body.nome }}', '{{ $json.body.email }}', '{{ $json.body.telefone }}', '{{ $json.body.senha }}') RETURNING *;",
+        "options": {}
+      },
+      "id": "1392aebc-6954-4657-95e4-1a01ed9e18f3",
+      "name": "Postgres — Cadastrar",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        400,
+        1000
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "70aBdY73eHvAkXwu",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "1ed298c5-d030-49ac-a9cd-5f530ed03b05",
+      "name": "Resposta — Cadastrado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        1000
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "brinkamais-login-cliente",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "4e45372f-dbcf-4302-82ab-748facd1984c",
+      "name": "Webhook — Login Cliente",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        1200
+      ],
+      "webhookId": "52d96478-25b3-445b-8523-d70cd7514f45"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM clientes WHERE email = '{{ $json.body.usuario }}' OR telefone = '{{ $json.body.usuario }}' AND senha = '{{ $json.body.senha }}' LIMIT 1;",
+        "options": {}
+      },
+      "id": "d8680353-97b3-46fe-9b50-78eee57a7049",
+      "name": "Postgres — Login",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        400,
+        1200
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "70aBdY73eHvAkXwu",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "2dd09400-20b6-43d8-aafc-7571145b58fe",
+      "name": "Resposta — Login",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        1200
+      ]
     }
   ],
   "connections": {
@@ -177,6 +449,94 @@
         [
           {
             "node": "Resposta — Atualizado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook — Obter Conversas": {
+      "main": [
+        [
+          {
+            "node": "Postgres — Conversas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres — Conversas": {
+      "main": [
+        [
+          {
+            "node": "Resposta — Conversas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook — Obter Mensagens": {
+      "main": [
+        [
+          {
+            "node": "Postgres — Mensagens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres — Mensagens": {
+      "main": [
+        [
+          {
+            "node": "Resposta — Mensagens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook — Cadastrar Cliente": {
+      "main": [
+        [
+          {
+            "node": "Postgres — Cadastrar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres — Cadastrar": {
+      "main": [
+        [
+          {
+            "node": "Resposta — Cadastrado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook — Login Cliente": {
+      "main": [
+        [
+          {
+            "node": "Postgres — Login",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres — Login": {
+      "main": [
+        [
+          {
+            "node": "Resposta — Login",
             "type": "main",
             "index": 0
           }

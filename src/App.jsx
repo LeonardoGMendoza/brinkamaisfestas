@@ -399,15 +399,34 @@ function LoginPage({ onLogin, onGoRegister, onGoPublic }) {
     e.preventDefault();
     setErro('');
     setLoading(true);
-    setTimeout(() => {
-      const u = USERS[usuario.trim().toLowerCase()];
-      if (u && u.senha === senha) {
-        onLogin({ nome: u.nome, role: u.role, avatar: u.avatar, usuario: usuario.trim() });
+    
+    // Teste de Admins/Atendentes locais
+    const u = USERS[usuario.trim().toLowerCase()];
+    if (u && u.senha === senha) {
+      setLoading(false);
+      return onLogin({ nome: u.nome, role: u.role, avatar: u.avatar, usuario: usuario.trim() });
+    }
+
+    // Tentar login no banco de clientes
+    fetch(`${CONFIG.N8N_BASE}/webhook/brinkamais-login-cliente`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuario: usuario.trim(), senha })
+    })
+    .then(r => r.json())
+    .then(data => {
+      setLoading(false);
+      if (data && data.length > 0) {
+        const c = data[0];
+        onLogin({ nome: c.nome, role: 'client', avatar: c.nome[0].toUpperCase(), usuario: c.email, telefone: c.telefone });
       } else {
         setErro('Usuário ou senha incorretos.');
-        setLoading(false);
       }
-    }, 700);
+    })
+    .catch(err => {
+      setLoading(false);
+      setErro('Erro de conexão ao verificar o login.');
+    });
   };
 
   return (
@@ -1024,14 +1043,52 @@ function AtendenteCatalogo() {
    ATENDENTE — CHAT WHATSAPP
    ============================================================ */
 function AtendenteChatWA({ fireToast }) {
-  const [conversas] = useState(MOCK_CONVERSAS);
-  const [ativa, setAtiva] = useState(MOCK_CONVERSAS[0]);
-  const [mensagens, setMensagens] = useState(MOCK_MENSAGENS);
+  const [conversas, setConversas] = useState([]);
+  const [ativa, setAtiva] = useState(null);
+  const [mensagens, setMensagens] = useState({});
   const [texto, setTexto] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [buscaConv, setBuscaConv] = useState('');
   const [showRapidas, setShowRapidas] = useState(false);
   const endRef = useRef(null);
+
+  // Buscar conversas ao carregar
+  useEffect(() => {
+    fetch(`${CONFIG.N8N_BASE}/webhook/brinkamais-conversas`)
+      .then(r => r.json())
+      .then(data => {
+        const mapped = data.map(c => ({
+          id: c.numero,
+          nome: c.nome || c.numero,
+          numero: c.numero,
+          avatar: c.nome ? c.nome[0].toUpperCase() : '👤',
+          ultimo: c.ultimo_conteudo || '',
+          hora: c.ultimo_contato ? new Date(c.ultimo_contato).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '',
+          status: 'novo',
+          naoLidas: 0
+        }));
+        setConversas(mapped);
+      })
+      .catch(err => console.error(err));
+  }, []);
+
+  // Buscar mensagens quando selecionar uma conversa
+  useEffect(() => {
+    if (ativa) {
+      fetch(`${CONFIG.N8N_BASE}/webhook/brinkamais-mensagens?numero=${ativa.numero}`)
+        .then(r => r.json())
+        .then(data => {
+          const mappedMsgs = data.map(m => ({
+            id: m.id,
+            dir: m.direcao === 'entrada' ? 'entrada' : 'saida',
+            texto: m.conteudo,
+            hora: m.criado_em ? new Date(m.criado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : ''
+          }));
+          setMensagens(prev => ({ ...prev, [ativa.id]: mappedMsgs }));
+        })
+        .catch(err => console.error(err));
+    }
+  }, [ativa]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
