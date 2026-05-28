@@ -1,5 +1,5 @@
 {
-  "name": "Brinka Mais Festas — Automação Completa (Corrigida)",
+  "name": "Brinka Mais Festas — Automação Completa (Conversa Contínua e Pedidos)",
   "nodes": [
     {
       "parameters": {
@@ -22,14 +22,14 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type",  "value": "application/json" },
-            { "name": "Client-Token",  "value": "Fc371b3a898d5425585d9e77e49e044eaS" }
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Client-Token", "value": "Fc371b3a898d5425585d9e77e49e044eaS" }
           ]
         },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "phone",   "value": "=55{{ $json.body.numero }}" },
+            { "name": "phone", "value": "=55{{ $json.body.numero }}" },
             { "name": "message", "value": "={{ $json.body.mensagem }}" }
           ]
         },
@@ -52,7 +52,6 @@
       "typeVersion": 1.1,
       "position": [680, 300]
     },
-
     {
       "parameters": {
         "httpMethod": "POST",
@@ -130,7 +129,6 @@
       "typeVersion": 1.1,
       "position": [900, 560]
     },
-
     {
       "parameters": {
         "httpMethod": "POST",
@@ -174,7 +172,6 @@
       "typeVersion": 1.1,
       "position": [680, 860]
     },
-
     {
       "parameters": {
         "httpMethod": "POST",
@@ -199,22 +196,24 @@
           },
           "conditions": [
             {
-              "id": "cond-not-me",
-              "leftValue": "={{ $json.body.isGroup === false && $json.body.fromMe === false && ( ($json.body.text?.message || '').toLowerCase().includes('brinka') || ($json.body.text?.message || '').toLowerCase().includes('festa') || ($json.body.text?.message || '').toLowerCase().includes('orçament') || ($json.body.text?.message || '').toLowerCase().includes('aluguel') || ($json.body.text?.message || '').toLowerCase().includes('brinquedo') || ($json.body.text?.message || '').toLowerCase().includes('olá! vim pelo site') ) }}",
+              "id": "c1",
+              "leftValue": "={{ $json.body.isGroup === false }}",
               "rightValue": "true",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.body.fromMe === false }}",
+              "rightValue": "true",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
             }
           ],
           "combinator": "and"
         },
         "options": {}
       },
-      "id": "bm-if-notme",
-      "name": "Ignorar minhas msgs",
+      "id": "bm-if-group",
+      "name": "Ignorar Grupos e Mim",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [460, 1160]
@@ -222,14 +221,65 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "CREATE TABLE IF NOT EXISTS conversas_brinka (\n  id SERIAL PRIMARY KEY,\n  numero VARCHAR(20) NOT NULL UNIQUE,\n  nome VARCHAR(100),\n  ultimo_contato TIMESTAMP DEFAULT NOW(),\n  total_msgs INTEGER DEFAULT 1\n);\n\nINSERT INTO conversas_brinka (numero, nome)\nVALUES ('{{ $json.body.phone }}', '{{ $json.body.senderName }}')\nON CONFLICT (numero) DO NOTHING;\n\nUPDATE conversas_brinka SET\n  ultimo_contato = NOW(),\n  total_msgs = total_msgs + 1,\n  nome = '{{ $json.body.senderName }}'\nWHERE numero = '{{ $json.body.phone }}';\n\nCREATE TABLE IF NOT EXISTS mensagens_brinka (\n  id SERIAL PRIMARY KEY,\n  numero VARCHAR(20),\n  nome VARCHAR(100),\n  direcao VARCHAR(10),\n  conteudo TEXT,\n  criado_em TIMESTAMP DEFAULT NOW()\n);\n\nINSERT INTO mensagens_brinka (numero, nome, direcao, conteudo)\nVALUES ('{{ $json.body.phone }}', '{{ $json.body.senderName }}', 'entrada', '{{ $json.body.text.message }}');",
+        "query": "SELECT id FROM conversas_brinka WHERE numero = '{{ $json.body.phone }}' LIMIT 1;",
+        "options": {}
+      },
+      "id": "bm-pg-check",
+      "name": "Verificar Conversa",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [680, 1140],
+      "credentials": {
+        "postgres": {
+          "id": "70aBdY73eHvAkXwu",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c3",
+              "leftValue": "={{ ($('Webhook — Receber Msg WA').item.json.body.text?.message || '').toLowerCase().includes('brinka') || ($('Webhook — Receber Msg WA').item.json.body.text?.message || '').toLowerCase().includes('festa') || ($('Webhook — Receber Msg WA').item.json.body.text?.message || '').toLowerCase().includes('orçament') || ($('Webhook — Receber Msg WA').item.json.body.text?.message || '').toLowerCase().includes('aluguel') || ($('Webhook — Receber Msg WA').item.json.body.text?.message || '').toLowerCase().includes('brinquedo') || ($('Webhook — Receber Msg WA').item.json.body.text?.message || '').toLowerCase().includes('olá! vim pelo site') }}",
+              "rightValue": "true",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            },
+            {
+              "id": "c4",
+              "leftValue": "={{ $json.id !== undefined }}",
+              "rightValue": "true",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "bm-if-keywords",
+      "name": "Palavra-Chave ou Conversa",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [900, 1140]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE IF NOT EXISTS conversas_brinka ( id SERIAL PRIMARY KEY, numero VARCHAR(100) NOT NULL UNIQUE, nome VARCHAR(100), ultimo_contato TIMESTAMP DEFAULT NOW(), total_msgs INTEGER DEFAULT 1 ); INSERT INTO conversas_brinka (numero, nome) VALUES ('{{ $('Webhook — Receber Msg WA').item.json.body.phone }}', '{{ $('Webhook — Receber Msg WA').item.json.body.senderName }}') ON CONFLICT (numero) DO NOTHING; UPDATE conversas_brinka SET ultimo_contato = NOW(), total_msgs = total_msgs + 1, nome = '{{ $('Webhook — Receber Msg WA').item.json.body.senderName }}' WHERE numero = '{{ $('Webhook — Receber Msg WA').item.json.body.phone }}'; CREATE TABLE IF NOT EXISTS mensagens_brinka ( id SERIAL PRIMARY KEY, numero VARCHAR(100), nome VARCHAR(100), direcao VARCHAR(10), conteudo TEXT, criado_em TIMESTAMP DEFAULT NOW() ); INSERT INTO mensagens_brinka (numero, nome, direcao, conteudo) VALUES ('{{ $('Webhook — Receber Msg WA').item.json.body.phone }}', '{{ $('Webhook — Receber Msg WA').item.json.body.senderName }}', 'entrada', '{{ $('Webhook — Receber Msg WA').item.json.body.text.message }}');",
         "options": {}
       },
       "id": "bm-pg-salvar-msg",
-      "name": "PostgreSQL — Registrar Mensagem",
+      "name": "PostgreSQL — Registrar Msg",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
-      "position": [700, 1160],
+      "position": [1120, 1120],
       "credentials": {
         "postgres": {
           "id": "70aBdY73eHvAkXwu",
@@ -242,14 +292,14 @@
         "promptType": "define",
         "text": "={{ $('Webhook — Receber Msg WA').item.json.body.text.message }}",
         "options": {
-          "systemMessage": "Você é um assistente de atendimento da Brinka Mais Festas, empresa de aluguel de brinquedos para festas infantis. Responda de forma simpática e objetiva. Nossos brinquedos: 🏰 Pula-Pula Castelo (R$ 250/dia), 🛝 Escorregador Inflável (R$ 220/dia), ⚽ Totó/Pebolim (R$ 150/dia), 🔵 Piscina de Bolinhas (R$ 130/dia), 🥅 Gol de Futebol (R$ 100/dia), 🤸 Cama Elástica (R$ 200/dia). Respostas curtas para WhatsApp, máximo 3 linhas."
+          "systemMessage": "Você é um assistente de atendimento da Brinka Mais Festas, empresa de aluguel de brinquedos para festas infantis. Responda de forma simpática e objetiva.\nNossos brinquedos:\n🏰 Pula-Pula Castelo (R$ 250/dia)\n🛝 Escorregador Inflável (R$ 220/dia)\n⚽ Totó/Pebolim (R$ 150/dia)\n🔵 Piscina de Bolinhas (R$ 130/dia)\n🥅 Gol de Futebol (R$ 100/dia)\n🤸 Cama Elástica (R$ 200/dia).\n\nQuando o cliente quiser fechar negócio, confirme se você já tem as seguintes informações: 1) Qual o brinquedo? 2) Data da festa? (formato YYYY-MM-DD) 3) Endereço completo do evento? 4) Quantas crianças?. Se faltar alguma, pergunte amigavelmente.\nQuando você tiver todas essas respostas, diga que um atendente humano vai assumir para finalizar o contrato, e OBRIGATORIAMENTE termine sua mensagem com o seguinte bloco exato:\n[FECHAR_PEDIDO]\nBrinquedo: <nome do brinquedo>\nData: <data no formato YYYY-MM-DD>\nEndereço: <endereço completo>\nCriancas: <quantidade>\nObs: <qualquer detalhe>\n[/FECHAR_PEDIDO]"
         }
       },
       "id": "bm-ai-auto",
       "name": "IA Auto — Resposta Automática",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
-      "position": [940, 1160]
+      "position": [1340, 1120]
     },
     {
       "parameters": {
@@ -260,7 +310,7 @@
       "name": "Groq — Auto",
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
-      "position": [920, 1380],
+      "position": [1320, 1340],
       "credentials": {
         "groqApi": {
           "id": "wrB7boS5AADQ1Fno",
@@ -277,7 +327,62 @@
       "name": "Memória por Cliente",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
-      "position": [1080, 1380]
+      "position": [1480, 1340]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c5",
+              "leftValue": "={{ $json.output.includes(\"[FECHAR_PEDIDO]\") }}",
+              "rightValue": "true",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "bm-if-fechar",
+      "name": "Verificar Fechamento Pedido",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1580, 1120]
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.output;\nconst blockMatch = text.match(/\\[FECHAR_PEDIDO\\]([\\s\\S]*?)\\[\\/FECHAR_PEDIDO\\]/);\nlet brinquedo = '', data = '', endereco = '', criancas = 0, obs = '';\n\nif (blockMatch) {\n  const block = blockMatch[1];\n  const extract = (label) => {\n    const regex = new RegExp(`${label}:\\s*(.*)`);\n    const m = block.match(regex);\n    return m ? m[1].trim() : '';\n  };\n  brinquedo = extract('Brinquedo');\n  data = extract('Data');\n  endereco = extract('Endereço');\n  criancas = parseInt(extract('Criancas')) || 0;\n  obs = extract('Obs');\n}\n\nlet dataSql = 'NULL';\nif (data.match(/^\\d{4}-\\d{2}-\\d{2}$/)) {\n  dataSql = `'${data}'`;\n}\n\nreturn [{\n  json: {\n    brinquedo, dataSql, endereco, criancas, obs,\n    cliente_nome: $('Webhook — Receber Msg WA').item.json.body.senderName,\n    cliente_tel: $('Webhook — Receber Msg WA').item.json.body.phone\n  }\n}];"
+      },
+      "id": "bm-code-extract",
+      "name": "Extrair Dados Pedido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1800, 1020]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE IF NOT EXISTS pedidos ( id SERIAL PRIMARY KEY, cliente_nome VARCHAR(100) NOT NULL, cliente_tel VARCHAR(100), item VARCHAR(200), data_festa DATE, local_evento TEXT, num_criancas INTEGER, status VARCHAR(20) DEFAULT 'pendente' CHECK (status IN ('pendente', 'aguardando', 'confirmado', 'cancelado')), obs TEXT, atendente VARCHAR(100), criado_em TIMESTAMP DEFAULT NOW(), atualizado_em TIMESTAMP DEFAULT NOW() ); ALTER TABLE pedidos ALTER COLUMN cliente_tel TYPE VARCHAR(100); INSERT INTO pedidos (cliente_nome, cliente_tel, item, data_festa, local_evento, num_criancas, status, obs) VALUES ('{{ $json.cliente_nome }}', '{{ $json.cliente_tel }}', '{{ $json.brinquedo }}', {{ $json.dataSql }}, '{{ $json.endereco }}', {{ $json.criancas }}, 'pendente', '{{ $json.obs }}');",
+        "options": {}
+      },
+      "id": "bm-pg-salvar-pedido",
+      "name": "PostgreSQL — Salvar Pedido",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [2020, 1020],
+      "credentials": {
+        "postgres": {
+          "id": "70aBdY73eHvAkXwu",
+          "name": "Postgres account 2"
+        }
+      }
     },
     {
       "parameters": {
@@ -293,7 +398,69 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "phone",   "value": "={{ $('Webhook — Receber Msg WA').item.json.body.phone }}" },
+            { "name": "phone", "value": "5511989553812" },
+            { "name": "message", "value": "=🐟 CAIU UM PEIXE NA REDE! 🐟\nNovo pedido fechado no WhatsApp!\n\n👤 Cliente: {{ $('Webhook — Receber Msg WA').item.json.body.senderName }}\n🧸 Brinquedo: {{ $('Extrair Dados Pedido').item.json.brinquedo }}\n📅 Data: {{ $('Extrair Dados Pedido').item.json.dataSql }}\n📍 Local: {{ $('Extrair Dados Pedido').item.json.endereco }}\n👧 Crianças: {{ $('Extrair Dados Pedido').item.json.criancas }}\n\nEntre no painel para assumir o atendimento!" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bm-zapi-avisar-admin",
+      "name": "Z-API — Avisar Admin",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2240, 1020]
+    },
+    {
+      "parameters": {
+        "jsCode": "let text = $('IA Auto — Resposta Automática').item.json.output;\ntext = text.replace(/\\[FECHAR_PEDIDO\\][\\s\\S]*?\\[\\/FECHAR_PEDIDO\\]/, '').trim();\nreturn [{ json: { message: text } }];"
+      },
+      "id": "bm-code-clean",
+      "name": "Limpar Mensagem IA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2460, 1020]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.z-api.io/instances/3F2F61CB306150004741423ED5B98F9F/token/D00FB2CBCEC59D1A1DFF3037/send-text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Client-Token", "value": "Fc371b3a898d5425585d9e77e49e044eaS" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $('Webhook — Receber Msg WA').item.json.body.phone }}" },
+            { "name": "message", "value": "={{ $json.message }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bm-zapi-send-client",
+      "name": "Z-API — Resposta Final Cliente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2680, 1020]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.z-api.io/instances/3F2F61CB306150004741423ED5B98F9F/token/D00FB2CBCEC59D1A1DFF3037/send-text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Client-Token", "value": "Fc371b3a898d5425585d9e77e49e044eaS" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone", "value": "={{ $('Webhook — Receber Msg WA').item.json.body.phone }}" },
             { "name": "message", "value": "={{ $node['IA Auto — Resposta Automática'].json.output }}" }
           ]
         },
@@ -303,93 +470,31 @@
       "name": "Z-API — Enviar Resposta Auto",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1200, 1160]
+      "position": [1800, 1280]
     }
   ],
   "connections": {
-    "Webhook — Enviar Mensagem WA": {
-      "main": [
-        [{ "node": "Z-API — Enviar Mensagem", "type": "main", "index": 0 }]
-      ]
-    },
-    "Z-API — Enviar Mensagem": {
-      "main": [
-        [{ "node": "Resposta — Envio OK", "type": "main", "index": 0 }]
-      ]
-    },
-    "Webhook — Agente IA": {
-      "main": [
-        [{ "node": "Agente IA — Brinka", "type": "main", "index": 0 }]
-      ]
-    },
-    "Agente IA — Brinka": {
-      "main": [
-        [{ "node": "Formatar Resposta IA", "type": "main", "index": 0 }]
-      ]
-    },
-    "Groq — llama-3.1-8b-instant": {
-      "ai_languageModel": [
-        [{ "node": "Agente IA — Brinka", "type": "ai_languageModel", "index": 0 }]
-      ]
-    },
-    "Memória da Conversa": {
-      "ai_memory": [
-        [{ "node": "Agente IA — Brinka", "type": "ai_memory", "index": 0 }]
-      ]
-    },
-    "Formatar Resposta IA": {
-      "main": [
-        [{ "node": "Resposta — IA Gerada", "type": "main", "index": 0 }]
-      ]
-    },
-    "Webhook — Salvar Anotação": {
-      "main": [
-        [{ "node": "PostgreSQL — Salvar Anotação", "type": "main", "index": 0 }]
-      ]
-    },
-    "PostgreSQL — Salvar Anotação": {
-      "main": [
-        [{ "node": "Resposta — Anotação Salva", "type": "main", "index": 0 }]
-      ]
-    },
-    "Webhook — Receber Msg WA": {
-      "main": [
-        [{ "node": "Ignorar minhas msgs", "type": "main", "index": 0 }]
-      ]
-    },
-    "Ignorar minhas msgs": {
-      "main": [
-        [{ "node": "PostgreSQL — Registrar Mensagem", "type": "main", "index": 0 }],
-        []
-      ]
-    },
-    "PostgreSQL — Registrar Mensagem": {
-      "main": [
-        [{ "node": "IA Auto — Resposta Automática", "type": "main", "index": 0 }]
-      ]
-    },
-    "IA Auto — Resposta Automática": {
-      "main": [
-        [{ "node": "Z-API — Enviar Resposta Auto", "type": "main", "index": 0 }]
-      ]
-    },
-    "Groq — Auto": {
-      "ai_languageModel": [
-        [{ "node": "IA Auto — Resposta Automática", "type": "ai_languageModel", "index": 0 }]
-      ]
-    },
-    "Memória por Cliente": {
-      "ai_memory": [
-        [{ "node": "IA Auto — Resposta Automática", "type": "ai_memory", "index": 0 }]
-      ]
-    }
-  },
-  "settings": {
-    "executionOrder": "v1"
-  },
-  "staticData": null,
-  "meta": {
-    "templateCredsSetupCompleted": true
-  },
-  "pinData": {}
+    "Webhook — Enviar Mensagem WA": { "main": [ [ { "node": "Z-API — Enviar Mensagem", "type": "main", "index": 0 } ] ] },
+    "Z-API — Enviar Mensagem": { "main": [ [ { "node": "Resposta — Envio OK", "type": "main", "index": 0 } ] ] },
+    "Webhook — Agente IA": { "main": [ [ { "node": "Agente IA — Brinka", "type": "main", "index": 0 } ] ] },
+    "Agente IA — Brinka": { "main": [ [ { "node": "Formatar Resposta IA", "type": "main", "index": 0 } ] ] },
+    "Groq — llama-3.1-8b-instant": { "ai_languageModel": [ [ { "node": "Agente IA — Brinka", "type": "ai_languageModel", "index": 0 } ] ] },
+    "Memória da Conversa": { "ai_memory": [ [ { "node": "Agente IA — Brinka", "type": "ai_memory", "index": 0 } ] ] },
+    "Formatar Resposta IA": { "main": [ [ { "node": "Resposta — IA Gerada", "type": "main", "index": 0 } ] ] },
+    "Webhook — Salvar Anotação": { "main": [ [ { "node": "PostgreSQL — Salvar Anotação", "type": "main", "index": 0 } ] ] },
+    "PostgreSQL — Salvar Anotação": { "main": [ [ { "node": "Resposta — Anotação Salva", "type": "main", "index": 0 } ] ] },
+    "Webhook — Receber Msg WA": { "main": [ [ { "node": "Ignorar Grupos e Mim", "type": "main", "index": 0 } ] ] },
+    "Ignorar Grupos e Mim": { "main": [ [ { "node": "Verificar Conversa", "type": "main", "index": 0 } ], [] ] },
+    "Verificar Conversa": { "main": [ [ { "node": "Palavra-Chave ou Conversa", "type": "main", "index": 0 } ] ] },
+    "Palavra-Chave ou Conversa": { "main": [ [ { "node": "PostgreSQL — Registrar Msg", "type": "main", "index": 0 } ], [] ] },
+    "PostgreSQL — Registrar Msg": { "main": [ [ { "node": "IA Auto — Resposta Automática", "type": "main", "index": 0 } ] ] },
+    "IA Auto — Resposta Automática": { "main": [ [ { "node": "Verificar Fechamento Pedido", "type": "main", "index": 0 } ] ] },
+    "Groq — Auto": { "ai_languageModel": [ [ { "node": "IA Auto — Resposta Automática", "type": "ai_languageModel", "index": 0 } ] ] },
+    "Memória por Cliente": { "ai_memory": [ [ { "node": "IA Auto — Resposta Automática", "type": "ai_memory", "index": 0 } ] ] },
+    "Verificar Fechamento Pedido": { "main": [ [ { "node": "Extrair Dados Pedido", "type": "main", "index": 0 } ], [ { "node": "Z-API — Enviar Resposta Auto", "type": "main", "index": 0 } ] ] },
+    "Extrair Dados Pedido": { "main": [ [ { "node": "PostgreSQL — Salvar Pedido", "type": "main", "index": 0 } ] ] },
+    "PostgreSQL — Salvar Pedido": { "main": [ [ { "node": "Z-API — Avisar Admin", "type": "main", "index": 0 } ] ] },
+    "Z-API — Avisar Admin": { "main": [ [ { "node": "Limpar Mensagem IA", "type": "main", "index": 0 } ] ] },
+    "Limpar Mensagem IA": { "main": [ [ { "node": "Z-API — Resposta Final Cliente", "type": "main", "index": 0 } ] ] }
+  }
 }
