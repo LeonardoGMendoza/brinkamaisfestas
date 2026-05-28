@@ -1,5 +1,5 @@
 {
-  "name": "Brinka Mais Festas — Automação Completa",
+  "name": "Brinka Mais Festas — Automação Completa (Corrigida)",
   "nodes": [
     {
       "parameters": {
@@ -186,8 +186,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [240, 1160],
-      "webhookId": "brinkamais-wa-receber",
-      "notes": "Configure este URL no painel Z-API → 'Webhooks e configurações gerais' → On Message Received"
+      "webhookId": "brinkamais-wa-receber"
     },
     {
       "parameters": {
@@ -223,7 +222,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "CREATE TABLE IF NOT EXISTS conversas_brinka (\n  id SERIAL PRIMARY KEY,\n  numero VARCHAR(20) NOT NULL,\n  nome VARCHAR(100),\n  ultimo_contato TIMESTAMP DEFAULT NOW(),\n  total_msgs INTEGER DEFAULT 1\n);\n\nINSERT INTO conversas_brinka (numero, nome)\nVALUES ('{{ $json.body.phone }}', '{{ $json.body.senderName }}')\nON CONFLICT DO NOTHING;\n\nUPDATE conversas_brinka SET\n  ultimo_contato = NOW(),\n  total_msgs = total_msgs + 1,\n  nome = '{{ $json.body.senderName }}'\nWHERE numero = '{{ $json.body.phone }}';\n\nCREATE TABLE IF NOT EXISTS mensagens_brinka (\n  id SERIAL PRIMARY KEY,\n  numero VARCHAR(20),\n  nome VARCHAR(100),\n  direcao VARCHAR(10),\n  conteudo TEXT,\n  criado_em TIMESTAMP DEFAULT NOW()\n);\n\nINSERT INTO mensagens_brinka (numero, nome, direcao, conteudo)\nVALUES ('{{ $json.body.phone }}', '{{ $json.body.senderName }}', 'entrada', '{{ $json.body.text.message }}');",
+        "query": "CREATE TABLE IF NOT EXISTS conversas_brinka (\n  id SERIAL PRIMARY KEY,\n  numero VARCHAR(20) NOT NULL UNIQUE,\n  nome VARCHAR(100),\n  ultimo_contato TIMESTAMP DEFAULT NOW(),\n  total_msgs INTEGER DEFAULT 1\n);\n\nINSERT INTO conversas_brinka (numero, nome)\nVALUES ('{{ $json.body.phone }}', '{{ $json.body.senderName }}')\nON CONFLICT (numero) DO NOTHING;\n\nUPDATE conversas_brinka SET\n  ultimo_contato = NOW(),\n  total_msgs = total_msgs + 1,\n  nome = '{{ $json.body.senderName }}'\nWHERE numero = '{{ $json.body.phone }}';\n\nCREATE TABLE IF NOT EXISTS mensagens_brinka (\n  id SERIAL PRIMARY KEY,\n  numero VARCHAR(20),\n  nome VARCHAR(100),\n  direcao VARCHAR(10),\n  conteudo TEXT,\n  criado_em TIMESTAMP DEFAULT NOW()\n);\n\nINSERT INTO mensagens_brinka (numero, nome, direcao, conteudo)\nVALUES ('{{ $json.body.phone }}', '{{ $json.body.senderName }}', 'entrada', '{{ $json.body.text.message }}');",
         "options": {}
       },
       "id": "bm-pg-salvar-msg",
@@ -238,25 +237,10 @@
         }
       }
     },
-
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "brinkamais-responder-wa",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "id": "bm-webhook-responder",
-      "name": "Webhook — Responder Cliente WA",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
-      "position": [240, 1360],
-      "webhookId": "brinkamais-responder-wa"
-    },
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $json.body.mensagem }}",
+        "text": "={{ $('Webhook — Receber Msg WA').item.json.body.text.message }}",
         "options": {
           "systemMessage": "Você é um assistente de atendimento da Brinka Mais Festas, empresa de aluguel de brinquedos para festas infantis. Responda de forma simpática e objetiva. Nossos brinquedos: 🏰 Pula-Pula Castelo (R$ 250/dia), 🛝 Escorregador Inflável (R$ 220/dia), ⚽ Totó/Pebolim (R$ 150/dia), 🔵 Piscina de Bolinhas (R$ 130/dia), 🥅 Gol de Futebol (R$ 100/dia), 🤸 Cama Elástica (R$ 200/dia). Respostas curtas para WhatsApp, máximo 3 linhas."
         }
@@ -265,7 +249,7 @@
       "name": "IA Auto — Resposta Automática",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
-      "position": [460, 1360]
+      "position": [940, 1160]
     },
     {
       "parameters": {
@@ -276,7 +260,7 @@
       "name": "Groq — Auto",
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
-      "position": [460, 1560],
+      "position": [920, 1380],
       "credentials": {
         "groqApi": {
           "id": "wrB7boS5AADQ1Fno",
@@ -287,13 +271,13 @@
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "=brinka_{{ $json.body.numero }}"
+        "sessionKey": "=brinka_{{ $('Webhook — Receber Msg WA').item.json.body.phone }}"
       },
       "id": "bm-memory-auto",
       "name": "Memória por Cliente",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
-      "position": [620, 1560]
+      "position": [1080, 1380]
     },
     {
       "parameters": {
@@ -309,7 +293,7 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "phone",   "value": "=55{{ $json.body.numero }}" },
+            { "name": "phone",   "value": "={{ $('Webhook — Receber Msg WA').item.json.body.phone }}" },
             { "name": "message", "value": "={{ $node['IA Auto — Resposta Automática'].json.output }}" }
           ]
         },
@@ -319,18 +303,7 @@
       "name": "Z-API — Enviar Resposta Auto",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [700, 1360]
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ { \"ok\": true, \"resposta\": $node['IA Auto — Resposta Automática'].json.output } }}"
-      },
-      "id": "bm-resp-auto",
-      "name": "Resposta — Auto OK",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [900, 1360]
+      "position": [1200, 1160]
     }
   ],
   "connections": {
@@ -390,7 +363,7 @@
         []
       ]
     },
-    "Webhook — Responder Cliente WA": {
+    "PostgreSQL — Registrar Mensagem": {
       "main": [
         [{ "node": "IA Auto — Resposta Automática", "type": "main", "index": 0 }]
       ]
@@ -408,11 +381,6 @@
     "Memória por Cliente": {
       "ai_memory": [
         [{ "node": "IA Auto — Resposta Automática", "type": "ai_memory", "index": 0 }]
-      ]
-    },
-    "Z-API — Enviar Resposta Auto": {
-      "main": [
-        [{ "node": "Resposta — Auto OK", "type": "main", "index": 0 }]
       ]
     }
   },
