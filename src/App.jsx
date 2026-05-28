@@ -23,6 +23,55 @@ const USERS = {
 };
 
 /* ============================================================
+   CONFIGURAÇÃO Z-API / N8N / GROQ
+   ============================================================ */
+const CONFIG = {
+  ZAPI_INSTANCE:  '3F2F61CB306150004741423ED5B98F9F',
+  ZAPI_TOKEN:     'D00FB2CBCEC59D1A1DFF3037',
+  ZAPI_CLIENT:    'Fc371b3a898d5425585d9e77e49e044eaS',
+  ZAPI_BASE:      'https://api.z-api.io/instances',
+  N8N_BASE:       'https://n8n.sandlj.com.br',
+  WA_NUMBER:      '11989553812',
+  GROQ_MODEL:     'llama-3.1-8b-instant',
+};
+
+// Respostas rápidas pré-definidas
+const RESPOSTAS_RAPIDAS = [
+  { id:'disponivel', label:'✅ Disponível', texto:'Olá! Temos disponibilidade para sua data. Posso confirmar o orçamento agora!' },
+  { id:'orcamento',  label:'💰 Orçamento',  texto:'Olá! Segue o orçamento:\n\n🏰 Pula-Pula Castelo: R$ 250/dia\n⚽ Totó/Pebolim: R$ 150/dia\n🤸 Cama Elástica: R$ 200/dia\n\nPacote completo com desconto especial! Quer saber mais?' },
+  { id:'confirmado', label:'🎉 Confirmar',  texto:'Ótimo! Seu pedido foi confirmado! Chegaremos no local às %HORA%. Qualquer dúvida, é só chamar!' },
+  { id:'data',       label:'📅 Pedir data', texto:'Olá! Para confirmarmos o orçamento, preciso saber: qual é a data e o horário da festa? E o endereço completo?' },
+  { id:'contato',    label:'📞 Retornar',   texto:'Olá! Vi sua mensagem. Podemos conversar agora ou prefere que eu ligue em outro horário?' },
+];
+
+// Mock de conversas WhatsApp
+const MOCK_CONVERSAS = [
+  { id:'1', nome:'Maria Silva',   numero:'11999990001', avatar:'👩', ultimo:'Queria saber o preço do pula-pula!', hora:'14:23', naoLidas:2, status:'pendente' },
+  { id:'2', nome:'Carlos Mendes', numero:'11999990002', avatar:'👨', ultimo:'Confirmado para sábado então! 🎉',  hora:'13:10', naoLidas:0, status:'confirmado' },
+  { id:'3', nome:'Ana Beatriz',   numero:'11999990003', avatar:'👩', ultimo:'Qual é o tamanho do escorregador?', hora:'11:45', naoLidas:1, status:'pendente' },
+  { id:'4', nome:'João Santos',   numero:'11999990004', avatar:'👨', ultimo:'Boa tarde! Vocês têm cama elástica?',hora:'09:30', naoLidas:3, status:'novo' },
+];
+
+const MOCK_MENSAGENS = {
+  '1': [
+    { id:1, dir:'entrada', texto:'Boa tarde! Vi o anúncio de vocês.', hora:'14:10' },
+    { id:2, dir:'entrada', texto:'Queria saber o preço do pula-pula!', hora:'14:23' },
+  ],
+  '2': [
+    { id:1, dir:'entrada', texto:'Olá, quero alugar o totó para sábado', hora:'12:50' },
+    { id:2, dir:'saida',   texto:'Oi Carlos! Temos disponível sim. R$ 150/dia.', hora:'13:00' },
+    { id:3, dir:'entrada', texto:'Confirmado para sábado então! 🎉', hora:'13:10' },
+  ],
+  '3': [
+    { id:1, dir:'entrada', texto:'Boa tarde! Qual é o tamanho do escorregador?', hora:'11:40' },
+    { id:2, dir:'entrada', texto:'E tem piscina de bolinhas junto?', hora:'11:45' },
+  ],
+  '4': [
+    { id:1, dir:'entrada', texto:'Boa tarde! Vocês têm cama elástica?', hora:'09:30' },
+  ],
+};
+
+/* ============================================================
    BALLOONS
    ============================================================ */
 function makeBalloon(i) {
@@ -802,6 +851,8 @@ const ATENDENTE_NAV = [
   { id:'pedidos',  icon:'📋', label:'Pedidos',  sub:'Solicitações dos clientes', badge:'2' },
   { id:'agenda',   icon:'📅', label:'Agenda',   sub:'Eventos programados' },
   { id:'catalogo', icon:'🧸', label:'Catálogo', sub:'Ver brinquedos' },
+  { id:'chat',     icon:'💬', label:'Chat WA',   sub:'WhatsApp em tempo real', badge:'6' },
+  { id:'agente',   icon:'🤖', label:'Agente IA', sub:'Sugestões automáticas' },
 ];
 
 function AtendenteDashboard({ user, onLogout, fireToast }) {
@@ -818,6 +869,8 @@ function AtendenteDashboard({ user, onLogout, fireToast }) {
       case 'pedidos':  return <AtendentePedidos pedidos={pedidos} onUpdate={updateStatus} />;
       case 'agenda':   return <AtendenteAgenda />;
       case 'catalogo': return <AtendenteCatalogo />;
+      case 'chat':     return <AtendenteChatWA fireToast={fireToast} />;
+      case 'agente':   return <AtendenteAgentIA fireToast={fireToast} user={user} />;
       default: return null;
     }
   };
@@ -915,6 +968,502 @@ function AtendenteCatalogo() {
             <div className="toy-tags">{t.tags.map(tag=><span key={tag} className="tag">{tag}</span>)}</div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   ATENDENTE — CHAT WHATSAPP
+   ============================================================ */
+function AtendenteChatWA({ fireToast }) {
+  const [conversas] = useState(MOCK_CONVERSAS);
+  const [ativa, setAtiva] = useState(MOCK_CONVERSAS[0]);
+  const [mensagens, setMensagens] = useState(MOCK_MENSAGENS);
+  const [texto, setTexto] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [buscaConv, setBuscaConv] = useState('');
+  const [showRapidas, setShowRapidas] = useState(false);
+  const endRef = useRef(null);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [mensagens, ativa]);
+
+  const convsFiltradas = conversas.filter(c =>
+    c.nome.toLowerCase().includes(buscaConv.toLowerCase()) ||
+    c.numero.includes(buscaConv)
+  );
+
+  const msgsAtivas = mensagens[ativa?.id] || [];
+
+  const enviarMensagem = async (msg = texto) => {
+    if (!msg.trim()) return;
+    const novaMsg = { id: Date.now(), dir: 'saida', texto: msg, hora: new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), enviando: true };
+    setMensagens(prev => ({ ...prev, [ativa.id]: [...(prev[ativa.id] || []), novaMsg] }));
+    setTexto('');
+    setShowRapidas(false);
+    setEnviando(true);
+
+    try {
+      // Chamada real para Z-API via n8n webhook
+      await fetch(`${CONFIG.N8N_BASE}/webhook/brinkamais-enviar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          numero: ativa.numero,
+          mensagem: msg,
+          atendente: 'Brinka Mais Festas',
+        }),
+      });
+      fireToast('✅ Mensagem enviada!');
+    } catch {
+      fireToast('⚠️ Enviado localmente (modo offline)');
+    } finally {
+      setEnviando(false);
+      setMensagens(prev => ({
+        ...prev,
+        [ativa.id]: (prev[ativa.id] || []).map(m => m.id === novaMsg.id ? { ...m, enviando: false } : m),
+      }));
+    }
+  };
+
+  const STATUS_CONV = { pendente:'yellow', confirmado:'green', novo:'blue' };
+  const STATUS_LABEL_CONV = { pendente:'⏳ Pendente', confirmado:'✅ Confirmado', novo:'🆕 Novo' };
+
+  return (
+    <div className="chat-shell">
+      {/* Lista de conversas */}
+      <aside className="chat-sidebar">
+        <div className="chat-sidebar-header">
+          <h3>💬 Conversas</h3>
+          <span className="tag blue">{conversas.reduce((a,c)=>a+c.naoLidas,0)} novas</span>
+        </div>
+        <div className="chat-search-wrap">
+          <input
+            className="chat-search"
+            placeholder="🔍 Buscar conversa..."
+            value={buscaConv}
+            onChange={e => setBuscaConv(e.target.value)}
+            id="chat-busca"
+          />
+        </div>
+        <div className="chat-conv-list">
+          {convsFiltradas.map(c => (
+            <button
+              key={c.id}
+              id={`chat-conv-${c.id}`}
+              className={`chat-conv-item${ativa?.id === c.id ? ' active' : ''}`}
+              onClick={() => setAtiva(c)}
+            >
+              <div className="chat-conv-ava">{c.avatar}</div>
+              <div className="chat-conv-info">
+                <div className="chat-conv-top">
+                  <span className="chat-conv-nome">{c.nome}</span>
+                  <span className="chat-conv-hora">{c.hora}</span>
+                </div>
+                <div className="chat-conv-preview">{c.ultimo}</div>
+                <span className={`tag ${STATUS_CONV[c.status]}`} style={{fontSize:'0.62rem',padding:'1px 7px',marginTop:3}}>
+                  {STATUS_LABEL_CONV[c.status]}
+                </span>
+              </div>
+              {c.naoLidas > 0 && <div className="chat-conv-badge">{c.naoLidas}</div>}
+            </button>
+          ))}
+        </div>
+      </aside>
+
+      {/* Área de mensagens */}
+      <div className="chat-main">
+        {ativa ? (
+          <>
+            {/* Header da conversa */}
+            <div className="chat-conv-header">
+              <div style={{display:'flex',alignItems:'center',gap:12}}>
+                <div className="chat-conv-ava" style={{width:42,height:42,fontSize:'1.3rem'}}>{ativa.avatar}</div>
+                <div>
+                  <div style={{fontWeight:800,fontSize:'1rem'}}>{ativa.nome}</div>
+                  <div style={{fontSize:'0.78rem',color:'var(--green)',display:'flex',alignItems:'center',gap:5}}>
+                    <span style={{width:7,height:7,borderRadius:'50%',background:'var(--green)',display:'inline-block'}}/>
+                    {ativa.numero} · Online
+                  </div>
+                </div>
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <a
+                  className="btn btn-green btn-sm"
+                  href={`https://wa.me/55${ativa.numero}`}
+                  target="_blank" rel="noreferrer"
+                  id={`chat-wa-${ativa.id}`}
+                  style={{gap:5}}
+                >
+                  📱 Abrir WA
+                </a>
+                <span className={`tag ${STATUS_CONV[ativa.status]}`}>{STATUS_LABEL_CONV[ativa.status]}</span>
+              </div>
+            </div>
+
+            {/* Mensagens */}
+            <div className="chat-msgs" id="chat-msgs-area">
+              <div className="chat-data-label">Hoje</div>
+              {msgsAtivas.map(m => (
+                <div key={m.id} className={`chat-bubble ${m.dir}`}>
+                  <div className="chat-bubble-text">{m.texto}</div>
+                  <div className="chat-bubble-hora">
+                    {m.hora} {m.dir==='saida' && (m.enviando ? '⏳' : '✓✓')}
+                  </div>
+                </div>
+              ))}
+              <div ref={endRef} />
+            </div>
+
+            {/* Respostas rápidas */}
+            {showRapidas && (
+              <div className="chat-rapidas">
+                <div style={{fontSize:'0.75rem',color:'var(--text2)',fontWeight:700,marginBottom:8}}>⚡ Respostas Rápidas</div>
+                <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                  {RESPOSTAS_RAPIDAS.map(r => (
+                    <button key={r.id} id={`rapida-${r.id}`} className="btn btn-ghost btn-sm" onClick={() => { setTexto(r.texto); setShowRapidas(false); }} style={{fontSize:'0.75rem'}}>
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Input de mensagem */}
+            <div className="chat-input-area">
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowRapidas(v => !v)}
+                title="Respostas rápidas"
+                id="chat-btn-rapidas"
+                style={{padding:'10px 12px',borderRadius:'50%',minHeight:44}}
+              >
+                ⚡
+              </button>
+              <textarea
+                id="chat-input-msg"
+                className="chat-input"
+                placeholder={`Mensagem para ${ativa.nome}...`}
+                value={texto}
+                onChange={e => setTexto(e.target.value)}
+                onKeyDown={e => { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); enviarMensagem(); } }}
+                rows={1}
+              />
+              <button
+                id="chat-btn-enviar"
+                className="btn btn-primary btn-sm"
+                onClick={() => enviarMensagem()}
+                disabled={!texto.trim() || enviando}
+                style={{padding:'10px 20px',borderRadius:'var(--r-full)',minHeight:44}}
+              >
+                {enviando ? '⏳' : '📤 Enviar'}
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="chat-empty">
+            <div style={{fontSize:'3rem',marginBottom:12}}>💬</div>
+            <p>Selecione uma conversa para começar</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   ATENDENTE — AGENTE IA
+   ============================================================ */
+function AtendenteAgentIA({ fireToast, user }) {
+  const [conversa, setConversa] = useState([
+    { role:'system', content:`Você é um assistente de atendimento da Brinka Mais Festas, empresa de aluguel de brinquedos para festas. Responda de forma simpática, rápida e objetiva. Quando precisar de informações do cliente (data, local, número de crianças), pergunte de forma amigável. Sempre ofereça nossos brinquedos: Pula-Pula Castelo, Escorregador Inflável, Totó/Pebolim, Piscina de Bolinhas, Gol de Futebol, Cama Elástica. Respostas devem ser curtas para WhatsApp. Nome do atendente: ${user?.nome || 'Atendente'}.` },
+  ]);
+  const [msgs, setMsgs] = useState([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [anotacoes, setAnotacoes] = useState([]);
+  const [novaAnotacao, setNovaAnotacao] = useState('');
+  const [clienteAtivo, setClienteAtivo] = useState(MOCK_CONVERSAS[0]);
+  const [sugestao, setSugestao] = useState('');
+  const endRef = useRef(null);
+
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior:'smooth' }); }, [msgs]);
+
+  const callGroq = async (histMsgs) => {
+    // Chama via webhook n8n que tem a chave Groq configurada
+    const res = await fetch(`${CONFIG.N8N_BASE}/webhook/brinkamais-ia`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mensagens: histMsgs,
+        cliente: clienteAtivo?.nome,
+        modelo: CONFIG.GROQ_MODEL,
+      }),
+    });
+    if (!res.ok) throw new Error('Erro ao chamar IA');
+    const data = await res.json();
+    return data.resposta || data.content || data.message || 'Sem resposta da IA.';
+  };
+
+  const enviarParaIA = async () => {
+    if (!input.trim() || loading) return;
+    const userMsg = { role:'user', content: input };
+    const novoHist = [...conversa, userMsg];
+    setConversa(novoHist);
+    setMsgs(prev => [...prev, { role:'user', content: input }]);
+    setInput('');
+    setLoading(true);
+    setSugestao('');
+
+    try {
+      const resposta = await callGroq(novoHist);
+      const assistMsg = { role:'assistant', content: resposta };
+      setConversa(prev => [...prev, assistMsg]);
+      setMsgs(prev => [...prev, { role:'assistant', content: resposta }]);
+      setSugestao(resposta);
+    } catch {
+      // Resposta de fallback local
+      const fallback = gerarRespostaLocal(input);
+      setMsgs(prev => [...prev, { role:'assistant', content: fallback }]);
+      setSugestao(fallback);
+      fireToast('⚠️ Usando IA offline (configure o webhook n8n)');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const gerarRespostaLocal = (pergunta) => {
+    const p = pergunta.toLowerCase();
+    if (p.includes('preço') || p.includes('valor') || p.includes('quanto')) {
+      return 'Nossos preços:\n🏰 Pula-Pula Castelo: R$ 250/dia\n⚽ Totó: R$ 150/dia\n🤸 Cama Elástica: R$ 200/dia\n🛝 Escorregador: R$ 220/dia\n\nPacotes com desconto! Qual data você precisa?';
+    }
+    if (p.includes('disponib') || p.includes('data')) {
+      return 'Temos ótima disponibilidade! Me informe a data da festa para confirmar. 😊';
+    }
+    if (p.includes('entrega') || p.includes('montagem')) {
+      return 'Sim! Fazemos entrega e montagem completa. Chegamos com antecedência para garantir tudo pronto antes dos convidados! 🚚';
+    }
+    return 'Olá! Fico feliz em ajudar! Para um orçamento personalizado, me diga: qual é a data da festa e quantas crianças teremos? 🎉';
+  };
+
+  const copiarSugestao = () => {
+    if (!sugestao) return;
+    navigator.clipboard.writeText(sugestao).then(() => fireToast('✅ Copiado para a área de transferência!'));
+  };
+
+  const salvarAnotacao = () => {
+    if (!novaAnotacao.trim()) return;
+    const nova = {
+      id: Date.now(),
+      texto: novaAnotacao,
+      cliente: clienteAtivo?.nome,
+      atendente: user?.nome,
+      hora: new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+      data: new Date().toLocaleDateString('pt-BR'),
+    };
+    setAnotacoes(prev => [nova, ...prev]);
+    setNovaAnotacao('');
+    // Salva via n8n → PostgreSQL
+    fetch(`${CONFIG.N8N_BASE}/webhook/brinkamais-anotacao`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(nova),
+    }).catch(() => {});
+    fireToast('📝 Anotação salva!');
+  };
+
+  return (
+    <div style={{display:'grid',gridTemplateColumns:'1fr 380px',gap:16,height:'calc(100vh - 120px)',minHeight:0}} className="agente-grid">
+
+      {/* Coluna principal: Chat com IA */}
+      <div style={{display:'flex',flexDirection:'column',gap:12,minHeight:0}}>
+
+        {/* Seletor de cliente */}
+        <div className="panel-card glass" style={{padding:'14px 18px',flexShrink:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+            <span style={{fontSize:'0.82rem',color:'var(--text2)',fontWeight:700}}>🎯 Atendendo:</span>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+              {MOCK_CONVERSAS.map(c => (
+                <button
+                  key={c.id}
+                  id={`agente-cliente-${c.id}`}
+                  className={`btn btn-sm ${clienteAtivo?.id===c.id ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => setClienteAtivo(c)}
+                  style={{fontSize:'0.75rem',padding:'6px 12px',minHeight:32}}
+                >
+                  {c.avatar} {c.nome}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Chat com IA */}
+        <div className="panel-card glass" style={{flex:1,display:'flex',flexDirection:'column',minHeight:0,padding:0,overflow:'hidden'}}>
+          <div className="panel-header" style={{padding:'14px 18px',borderBottom:'1px solid var(--border)',marginBottom:0,flexShrink:0}}>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <div style={{width:36,height:36,borderRadius:'50%',background:'var(--grad)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.1rem'}}>🤖</div>
+              <div>
+                <h2 style={{fontSize:'0.95rem',margin:0}}>Agente IA — Groq</h2>
+                <span style={{fontSize:'0.73rem',color:'var(--text2)'}}>Assistente de atendimento · {CONFIG.GROQ_MODEL}</span>
+              </div>
+            </div>
+            <button className="btn btn-ghost btn-sm" id="agente-limpar" onClick={() => { setMsgs([]); setConversa([conversa[0]]); setSugestao(''); }} style={{fontSize:'0.75rem'}}>
+              🗑️ Limpar
+            </button>
+          </div>
+
+          <div className="agente-chat-msgs" id="agente-msgs-area">
+            {msgs.length === 0 && (
+              <div className="chat-empty" style={{padding:32}}>
+                <div style={{fontSize:'2.5rem',marginBottom:10}}>🤖</div>
+                <p style={{fontWeight:700,marginBottom:6}}>Agente IA pronto!</p>
+                <p style={{fontSize:'0.82rem'}}>Simule a mensagem do cliente e receba sugestão de resposta</p>
+                <div style={{display:'flex',gap:8,flexWrap:'wrap',justifyContent:'center',marginTop:14}}>
+                  {['Quero saber o preço!','Tem disponível no sábado?','Como funciona a entrega?'].map(ex => (
+                    <button key={ex} className="btn btn-ghost btn-sm" style={{fontSize:'0.75rem'}} id={`ex-${ex.slice(0,10)}`} onClick={() => setInput(ex)}>
+                      {ex}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {msgs.map((m, i) => (
+              <div key={i} className={`agente-msg ${m.role}`}>
+                <div className="agente-msg-icon">{m.role==='user' ? clienteAtivo?.avatar || '👤' : '🤖'}</div>
+                <div className="agente-msg-bubble">
+                  <div className="agente-msg-label">{m.role==='user' ? `${clienteAtivo?.nome || 'Cliente'}` : 'Agente IA (Groq)'}</div>
+                  <div className="agente-msg-text">{m.content}</div>
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="agente-msg assistant">
+                <div className="agente-msg-icon">🤖</div>
+                <div className="agente-msg-bubble">
+                  <div className="agente-msg-label">Agente IA</div>
+                  <div className="agente-typing"><span/><span/><span/></div>
+                </div>
+              </div>
+            )}
+            <div ref={endRef} />
+          </div>
+
+          {/* Sugestão gerada */}
+          {sugestao && (
+            <div className="agente-sugestao">
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+                <span style={{fontSize:'0.78rem',fontWeight:800,color:'var(--green)'}}>✅ Sugestão de resposta para o cliente:</span>
+                <div style={{display:'flex',gap:6}}>
+                  <button className="btn btn-sm btn-ghost" id="agente-copiar" onClick={copiarSugestao} style={{fontSize:'0.72rem',padding:'5px 10px',minHeight:30}}>📋 Copiar</button>
+                  <button className="btn btn-sm btn-green" id="agente-enviar-wa" style={{fontSize:'0.72rem',padding:'5px 10px',minHeight:30}}
+                    onClick={() => {
+                      const url = `https://wa.me/55${clienteAtivo?.numero}?text=${encodeURIComponent(sugestao)}`;
+                      window.open(url, '_blank');
+                    }}
+                  >📱 Enviar no WA</button>
+                </div>
+              </div>
+              <div style={{fontSize:'0.83rem',lineHeight:1.7,color:'var(--text)',whiteSpace:'pre-wrap'}}>{sugestao}</div>
+            </div>
+          )}
+
+          <div className="agente-input-area">
+            <textarea
+              id="agente-input"
+              className="chat-input"
+              placeholder={`Simule a mensagem de ${clienteAtivo?.nome || 'cliente'}...`}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); enviarParaIA(); } }}
+              rows={2}
+              style={{flex:1}}
+            />
+            <button
+              id="agente-btn-enviar"
+              className="btn btn-primary"
+              onClick={enviarParaIA}
+              disabled={!input.trim() || loading}
+              style={{padding:'12px 20px',borderRadius:'var(--r-full)',minHeight:48,alignSelf:'flex-end'}}
+            >
+              {loading ? '🤖 Pensando...' : '🚀 Gerar'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Coluna direita: Anotações */}
+      <div style={{display:'flex',flexDirection:'column',gap:12,minHeight:0}}>
+        <div className="panel-card glass" style={{display:'flex',flexDirection:'column',gap:12,padding:'18px',flexShrink:0}}>
+          <div className="panel-header" style={{marginBottom:0}}>
+            <h2>📝 Anotações do Atendimento</h2>
+            <span className="tag">{clienteAtivo?.nome}</span>
+          </div>
+          <div className="input-group">
+            <textarea
+              id="anotacao-input"
+              placeholder={`Registre observações sobre ${clienteAtivo?.nome}...\nEx: Data confirmada 30/05, pagamento via PIX`}
+              value={novaAnotacao}
+              onChange={e => setNovaAnotacao(e.target.value)}
+              rows={4}
+              style={{resize:'none'}}
+            />
+          </div>
+          <button
+            id="anotacao-salvar"
+            className="btn btn-primary btn-sm"
+            onClick={salvarAnotacao}
+            style={{width:'100%'}}
+          >
+            💾 Salvar Anotação
+          </button>
+        </div>
+
+        {/* Histórico de anotações */}
+        <div className="panel-card glass" style={{flex:1,overflow:'hidden',display:'flex',flexDirection:'column',padding:0}}>
+          <div className="panel-header" style={{padding:'14px 18px',borderBottom:'1px solid var(--border)',marginBottom:0,flexShrink:0}}>
+            <h2>🗒️ Histórico</h2>
+            <span className="tag">{anotacoes.length}</span>
+          </div>
+          <div style={{flex:1,overflowY:'auto',padding:'12px'}}>
+            {anotacoes.length === 0 ? (
+              <div style={{textAlign:'center',padding:'24px 12px',color:'var(--text2)'}}>
+                <div style={{fontSize:'2rem',marginBottom:8}}>📋</div>
+                <p style={{fontSize:'0.82rem'}}>Nenhuma anotação ainda. Registre observações importantes!</p>
+              </div>
+            ) : (
+              anotacoes.map(a => (
+                <div key={a.id} className="anotacao-item">
+                  <div className="anotacao-meta">
+                    <span>👤 {a.cliente}</span>
+                    <span>🕐 {a.hora} · {a.data}</span>
+                  </div>
+                  <p>{a.texto}</p>
+                  <div style={{fontSize:'0.72rem',color:'var(--text3)',marginTop:4}}>por {a.atendente}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Config rápida */}
+        <div className="panel-card glass" style={{padding:'14px 18px'}}>
+          <div style={{fontSize:'0.75rem',color:'var(--text3)',fontWeight:700,marginBottom:8}}>⚙️ CONEXÕES</div>
+          <div style={{display:'flex',flexDirection:'column',gap:6}}>
+            {[
+              { icon:'🤖', label:'Groq IA',  status:'Config. no n8n', ok: true },
+              { icon:'📱', label:'Z-API',    status:'Conectado ✓',    ok: true },
+              { icon:'⚡', label:'n8n',      status:CONFIG.N8N_BASE.replace('https://',''), ok: true },
+            ].map(s => (
+              <div key={s.label} style={{display:'flex',alignItems:'center',justifyContent:'space-between',fontSize:'0.78rem'}}>
+                <span>{s.icon} {s.label}</span>
+                <span style={{color: s.ok ? 'var(--green)' : 'var(--red)',fontWeight:700}}>{s.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

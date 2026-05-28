@@ -1,0 +1,427 @@
+{
+  "name": "Brinka Mais Festas — Automação Completa",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "brinkamais-enviar",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "bm-webhook-enviar",
+      "name": "Webhook — Enviar Mensagem WA",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "webhookId": "brinkamais-enviar"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.z-api.io/instances/3F2F61CB306150004741423ED5B98F9F/token/D00FB2CBCEC59D1A1DFF3037/send-text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type",  "value": "application/json" },
+            { "name": "Client-Token",  "value": "Fc371b3a898d5425585d9e77e49e044eaS" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone",   "value": "=55{{ $json.body.numero }}" },
+            { "name": "message", "value": "={{ $json.body.mensagem }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bm-zapi-send",
+      "name": "Z-API — Enviar Mensagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true, \"enviado\": true } }}"
+      },
+      "id": "bm-resp-enviar",
+      "name": "Resposta — Envio OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [680, 300]
+    },
+
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "brinkamais-ia",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "bm-webhook-ia",
+      "name": "Webhook — Agente IA",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 560],
+      "webhookId": "brinkamais-ia"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.mensagens.filter(m => m.role !== 'system').slice(-1)[0]?.content || 'Olá!' }}",
+        "options": {
+          "systemMessage": "Você é um assistente de atendimento da Brinka Mais Festas, empresa de aluguel de brinquedos para festas infantis em São Paulo. Responda de forma simpática, rápida e objetiva. Quando precisar de informações do cliente (data, local, número de crianças), pergunte de forma amigável. Nossos brinquedos disponíveis: 🏰 Pula-Pula Castelo (R$ 250/dia), 🛝 Escorregador Inflável (R$ 220/dia), ⚽ Totó/Pebolim (R$ 150/dia), 🔵 Piscina de Bolinhas (R$ 130/dia), 🥅 Gol de Futebol (R$ 100/dia), 🤸 Cama Elástica (R$ 200/dia). Temos pacotes com desconto! WhatsApp de contato: 11989553812. Respostas devem ser curtas e diretas, adequadas para WhatsApp."
+        }
+      },
+      "id": "bm-ai-agent",
+      "name": "Agente IA — Brinka",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [460, 560]
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-8b-instant",
+        "options": {}
+      },
+      "id": "bm-groq-model",
+      "name": "Groq — llama-3.1-8b-instant",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [460, 780],
+      "credentials": {
+        "groqApi": {
+          "id": "wrB7boS5AADQ1Fno",
+          "name": "Groq account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=brinka_{{ $json.body.mensagens.filter(m => m.role !== 'system').slice(-1)[0]?.content?.slice(0,20) || 'default' }}"
+      },
+      "id": "bm-memory",
+      "name": "Memória da Conversa",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [620, 780]
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = $input.first().json.output || '';\nreturn [{ json: { resposta: output, modelo: 'llama-3.1-8b-instant' } }];"
+      },
+      "id": "bm-code-ia",
+      "name": "Formatar Resposta IA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 560]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"resposta\": $json.resposta, \"modelo\": $json.modelo } }}"
+      },
+      "id": "bm-resp-ia",
+      "name": "Resposta — IA Gerada",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 560]
+    },
+
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "brinkamais-anotacao",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "bm-webhook-anotacao",
+      "name": "Webhook — Salvar Anotação",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 860],
+      "webhookId": "brinkamais-anotacao"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE IF NOT EXISTS anotacoes_brinka (\n  id SERIAL PRIMARY KEY,\n  cliente VARCHAR(100),\n  atendente VARCHAR(100),\n  texto TEXT NOT NULL,\n  hora VARCHAR(10),\n  data_anotacao VARCHAR(20),\n  criado_em TIMESTAMP DEFAULT NOW()\n);\n\nINSERT INTO anotacoes_brinka (cliente, atendente, texto, hora, data_anotacao)\nVALUES (\n  '{{ $json.body.cliente }}',\n  '{{ $json.body.atendente }}',\n  '{{ $json.body.texto }}',\n  '{{ $json.body.hora }}',\n  '{{ $json.body.data }}'\n)\nRETURNING id;",
+        "options": {}
+      },
+      "id": "bm-pg-anotacao",
+      "name": "PostgreSQL — Salvar Anotação",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [460, 860],
+      "credentials": {
+        "postgres": {
+          "id": "70aBdY73eHvAkXwu",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true, \"id\": $json[0]?.id } }}"
+      },
+      "id": "bm-resp-anotacao",
+      "name": "Resposta — Anotação Salva",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [680, 860]
+    },
+
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "brinkamais-wa-receber",
+        "options": {}
+      },
+      "id": "bm-webhook-receber",
+      "name": "Webhook — Receber Msg WA",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 1160],
+      "webhookId": "brinkamais-wa-receber",
+      "notes": "Configure este URL no painel Z-API → 'Webhooks e configurações gerais' → On Message Received"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cond-not-me",
+              "leftValue": "={{ $json.body.fromMe }}",
+              "rightValue": "false",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "bm-if-notme",
+      "name": "Ignorar minhas msgs",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [460, 1160]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE IF NOT EXISTS conversas_brinka (\n  id SERIAL PRIMARY KEY,\n  numero VARCHAR(20) NOT NULL,\n  nome VARCHAR(100),\n  ultimo_contato TIMESTAMP DEFAULT NOW(),\n  total_msgs INTEGER DEFAULT 1\n);\n\nINSERT INTO conversas_brinka (numero, nome)\nVALUES ('{{ $json.body.phone }}', '{{ $json.body.senderName }}')\nON CONFLICT DO NOTHING;\n\nUPDATE conversas_brinka SET\n  ultimo_contato = NOW(),\n  total_msgs = total_msgs + 1,\n  nome = '{{ $json.body.senderName }}'\nWHERE numero = '{{ $json.body.phone }}';\n\nCREATE TABLE IF NOT EXISTS mensagens_brinka (\n  id SERIAL PRIMARY KEY,\n  numero VARCHAR(20),\n  nome VARCHAR(100),\n  direcao VARCHAR(10),\n  conteudo TEXT,\n  criado_em TIMESTAMP DEFAULT NOW()\n);\n\nINSERT INTO mensagens_brinka (numero, nome, direcao, conteudo)\nVALUES ('{{ $json.body.phone }}', '{{ $json.body.senderName }}', 'entrada', '{{ $json.body.text.message }}');",
+        "options": {}
+      },
+      "id": "bm-pg-salvar-msg",
+      "name": "PostgreSQL — Registrar Mensagem",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [700, 1160],
+      "credentials": {
+        "postgres": {
+          "id": "70aBdY73eHvAkXwu",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "brinkamais-responder-wa",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "bm-webhook-responder",
+      "name": "Webhook — Responder Cliente WA",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 1360],
+      "webhookId": "brinkamais-responder-wa"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.mensagem }}",
+        "options": {
+          "systemMessage": "Você é um assistente de atendimento da Brinka Mais Festas, empresa de aluguel de brinquedos para festas infantis. Responda de forma simpática e objetiva. Nossos brinquedos: 🏰 Pula-Pula Castelo (R$ 250/dia), 🛝 Escorregador Inflável (R$ 220/dia), ⚽ Totó/Pebolim (R$ 150/dia), 🔵 Piscina de Bolinhas (R$ 130/dia), 🥅 Gol de Futebol (R$ 100/dia), 🤸 Cama Elástica (R$ 200/dia). Respostas curtas para WhatsApp, máximo 3 linhas."
+        }
+      },
+      "id": "bm-ai-auto",
+      "name": "IA Auto — Resposta Automática",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [460, 1360]
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-8b-instant",
+        "options": {}
+      },
+      "id": "bm-groq-auto",
+      "name": "Groq — Auto",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [460, 1560],
+      "credentials": {
+        "groqApi": {
+          "id": "wrB7boS5AADQ1Fno",
+          "name": "Groq account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=brinka_{{ $json.body.numero }}"
+      },
+      "id": "bm-memory-auto",
+      "name": "Memória por Cliente",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [620, 1560]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.z-api.io/instances/3F2F61CB306150004741423ED5B98F9F/token/D00FB2CBCEC59D1A1DFF3037/send-text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Client-Token", "value": "Fc371b3a898d5425585d9e77e49e044eaS" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "phone",   "value": "=55{{ $json.body.numero }}" },
+            { "name": "message", "value": "={{ $node['IA Auto — Resposta Automática'].json.output }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bm-zapi-auto-send",
+      "name": "Z-API — Enviar Resposta Auto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [700, 1360]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true, \"resposta\": $node['IA Auto — Resposta Automática'].json.output } }}"
+      },
+      "id": "bm-resp-auto",
+      "name": "Resposta — Auto OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 1360]
+    }
+  ],
+  "connections": {
+    "Webhook — Enviar Mensagem WA": {
+      "main": [
+        [{ "node": "Z-API — Enviar Mensagem", "type": "main", "index": 0 }]
+      ]
+    },
+    "Z-API — Enviar Mensagem": {
+      "main": [
+        [{ "node": "Resposta — Envio OK", "type": "main", "index": 0 }]
+      ]
+    },
+    "Webhook — Agente IA": {
+      "main": [
+        [{ "node": "Agente IA — Brinka", "type": "main", "index": 0 }]
+      ]
+    },
+    "Agente IA — Brinka": {
+      "main": [
+        [{ "node": "Formatar Resposta IA", "type": "main", "index": 0 }]
+      ]
+    },
+    "Groq — llama-3.1-8b-instant": {
+      "ai_languageModel": [
+        [{ "node": "Agente IA — Brinka", "type": "ai_languageModel", "index": 0 }]
+      ]
+    },
+    "Memória da Conversa": {
+      "ai_memory": [
+        [{ "node": "Agente IA — Brinka", "type": "ai_memory", "index": 0 }]
+      ]
+    },
+    "Formatar Resposta IA": {
+      "main": [
+        [{ "node": "Resposta — IA Gerada", "type": "main", "index": 0 }]
+      ]
+    },
+    "Webhook — Salvar Anotação": {
+      "main": [
+        [{ "node": "PostgreSQL — Salvar Anotação", "type": "main", "index": 0 }]
+      ]
+    },
+    "PostgreSQL — Salvar Anotação": {
+      "main": [
+        [{ "node": "Resposta — Anotação Salva", "type": "main", "index": 0 }]
+      ]
+    },
+    "Webhook — Receber Msg WA": {
+      "main": [
+        [{ "node": "Ignorar minhas msgs", "type": "main", "index": 0 }]
+      ]
+    },
+    "Ignorar minhas msgs": {
+      "main": [
+        [{ "node": "PostgreSQL — Registrar Mensagem", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Webhook — Responder Cliente WA": {
+      "main": [
+        [{ "node": "IA Auto — Resposta Automática", "type": "main", "index": 0 }]
+      ]
+    },
+    "IA Auto — Resposta Automática": {
+      "main": [
+        [{ "node": "Z-API — Enviar Resposta Auto", "type": "main", "index": 0 }]
+      ]
+    },
+    "Groq — Auto": {
+      "ai_languageModel": [
+        [{ "node": "IA Auto — Resposta Automática", "type": "ai_languageModel", "index": 0 }]
+      ]
+    },
+    "Memória por Cliente": {
+      "ai_memory": [
+        [{ "node": "IA Auto — Resposta Automática", "type": "ai_memory", "index": 0 }]
+      ]
+    },
+    "Z-API — Enviar Resposta Auto": {
+      "main": [
+        [{ "node": "Resposta — Auto OK", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {}
+}
