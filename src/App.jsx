@@ -643,7 +643,8 @@ function AdminDashboard({ user, onLogout, fireToast }) {
       .then(r => r.json())
       .then(data => {
         // Mapear dados do Postgres para o formato do Frontend
-        const mapped = data.map(d => ({
+        let rows = Array.isArray(data) ? data : [data];
+        const mapped = rows.map(d => ({
           id: d.id,
           cliente: d.cliente_nome,
           tel: d.cliente_tel || '(00)0000-0000',
