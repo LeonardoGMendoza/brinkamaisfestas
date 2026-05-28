@@ -1,0 +1,190 @@
+{
+  "name": "Brinka Mais Festas — API Frontend",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "brinkamais-pedidos",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "ad216d12-6a8e-4312-ac56-fa91498c90cf",
+      "name": "Webhook — Obter Pedidos",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        200
+      ],
+      "webhookId": "0d694aea-a779-4078-99f8-c25a0ac37bbc"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM pedidos ORDER BY id DESC LIMIT 100;",
+        "options": {}
+      },
+      "id": "baeabaff-a0f4-4120-b89b-8dd44143256d",
+      "name": "Postgres — Listar",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        400,
+        200
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "70aBdY73eHvAkXwu",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, OPTIONS"
+              }
+            ]
+          }
+        }
+      },
+      "id": "26516de7-89ce-41ef-9f17-53d43332aef0",
+      "name": "Resposta — OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "brinkamais-atualizar-status",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "ebf4f6e2-c0e6-4b59-8f9a-ff8e2e8c1c0b",
+      "name": "Webhook — Atualizar Status",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        400
+      ],
+      "webhookId": "4332570f-92ef-4dbc-b769-cbf83c3990fe"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE pedidos SET status = '{{ $json.body.status }}' WHERE id = {{ $json.body.id }} RETURNING *;",
+        "options": {}
+      },
+      "id": "715c32d5-9910-471c-8288-29f295c00d06",
+      "name": "Postgres — Atualizar",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        400,
+        400
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "70aBdY73eHvAkXwu",
+          "name": "Postgres account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "id": "4e5b5bea-0f89-468c-8f30-54b8aefcba72",
+      "name": "Resposta — Atualizado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook — Obter Pedidos": {
+      "main": [
+        [
+          {
+            "node": "Postgres — Listar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres — Listar": {
+      "main": [
+        [
+          {
+            "node": "Resposta — OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook — Atualizar Status": {
+      "main": [
+        [
+          {
+            "node": "Postgres — Atualizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres — Atualizar": {
+      "main": [
+        [
+          {
+            "node": "Resposta — Atualizado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

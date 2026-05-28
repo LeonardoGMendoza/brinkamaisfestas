@@ -617,11 +617,35 @@ const STATUS_LABEL = { confirmado:'✅ Confirmado', aguardando:'⏳ Aguardando',
 
 function AdminDashboard({ user, onLogout, fireToast }) {
   const [tab, setTab] = useState('dashboard');
-  const [pedidos, setPedidos] = useState(MOCK_PEDIDOS);
+  const [pedidos, setPedidos] = useState([]);
+  
+  useEffect(() => {
+    fetch(`${CONFIG.N8N_BASE}/webhook/brinkamais-pedidos`)
+      .then(r => r.json())
+      .then(data => {
+        // Mapear dados do Postgres para o formato do Frontend
+        const mapped = data.map(d => ({
+          id: d.id,
+          cliente: d.cliente_nome,
+          tel: d.cliente_tel || '(00)0000-0000',
+          item: d.item,
+          data: d.data_festa ? d.data_festa.split('T')[0] : 'N/A',
+          status: d.status || 'pendente',
+          local: d.local_evento || 'Sem endereço'
+        }));
+        setPedidos(mapped);
+      })
+      .catch(err => console.error("Erro ao buscar pedidos", err));
+  }, []);
 
   const changeStatus = (id, status) => {
     setPedidos(ps => ps.map(p => p.id === id ? { ...p, status } : p));
     fireToast('✅ Status atualizado!');
+    fetch(`${CONFIG.N8N_BASE}/webhook/brinkamais-atualizar-status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status })
+    }).catch(err => console.error("Erro ao atualizar status", err));
   };
 
   const renderContent = () => {
@@ -857,11 +881,34 @@ const ATENDENTE_NAV = [
 
 function AtendenteDashboard({ user, onLogout, fireToast }) {
   const [tab, setTab] = useState('pedidos');
-  const [pedidos, setPedidos] = useState(MOCK_PEDIDOS.filter(p => p.status !== 'confirmado'));
+  const [pedidos, setPedidos] = useState([]);
+  
+  useEffect(() => {
+    fetch(`${CONFIG.N8N_BASE}/webhook/brinkamais-pedidos`)
+      .then(r => r.json())
+      .then(data => {
+        const mapped = data.map(d => ({
+          id: d.id,
+          cliente: d.cliente_nome,
+          tel: d.cliente_tel || '(00)0000-0000',
+          item: d.item,
+          data: d.data_festa ? d.data_festa.split('T')[0] : 'N/A',
+          status: d.status || 'pendente',
+          local: d.local_evento || 'Sem endereço'
+        })).filter(p => p.status !== 'confirmado');
+        setPedidos(mapped);
+      })
+      .catch(err => console.error("Erro ao buscar pedidos", err));
+  }, []);
 
   const updateStatus = (id, status) => {
     setPedidos(ps => ps.map(p => p.id===id ? {...p, status} : p));
     fireToast('✅ Pedido atualizado!');
+    fetch(`${CONFIG.N8N_BASE}/webhook/brinkamais-atualizar-status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status })
+    }).catch(err => console.error("Erro ao atualizar status", err));
   };
 
   const renderContent = () => {
