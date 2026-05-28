@@ -54,6 +54,8 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   line-height: 1.55;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 img { max-width: 100%; height: auto; display: block; }
 a { text-decoration: none; color: inherit; }
