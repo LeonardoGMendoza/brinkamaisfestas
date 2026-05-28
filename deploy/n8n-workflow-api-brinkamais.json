@@ -42,7 +42,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($json) }}",
+        "responseBody": "={{ JSON.stringify($input.all().map(i => i.json)) }}",
         "options": {
           "responseHeaders": {
             "entries": [
@@ -108,7 +108,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($json) }}",
+        "responseBody": "={{ JSON.stringify($input.all().map(i => i.json)) }}",
         "options": {
           "responseHeaders": {
             "entries": [
@@ -178,7 +178,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($json) }}",
+        "responseBody": "={{ JSON.stringify($input.all().map(i => i.json)) }}",
         "options": {
           "responseHeaders": {
             "entries": [
@@ -244,7 +244,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($json) }}",
+        "responseBody": "={{ JSON.stringify($input.all().map(i => i.json)) }}",
         "options": {
           "responseHeaders": {
             "entries": [
@@ -310,7 +310,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($json) }}",
+        "responseBody": "={{ JSON.stringify($input.all().map(i => i.json)) }}",
         "options": {
           "responseHeaders": {
             "entries": [
@@ -380,7 +380,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($json) }}",
+        "responseBody": "={{ JSON.stringify($input.all().map(i => i.json)) }}",
         "options": {
           "responseHeaders": {
             "entries": [

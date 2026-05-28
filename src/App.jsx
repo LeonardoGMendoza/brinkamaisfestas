@@ -906,7 +906,8 @@ function AtendenteDashboard({ user, onLogout, fireToast }) {
     fetch(`${CONFIG.N8N_BASE}/webhook/brinkamais-pedidos`)
       .then(r => r.json())
       .then(data => {
-        const mapped = data.map(d => ({
+        let rows = Array.isArray(data) ? data : [data];
+        const mapped = rows.map(d => ({
           id: d.id,
           cliente: d.cliente_nome,
           tel: d.cliente_tel || '(00)0000-0000',
@@ -1057,7 +1058,8 @@ function AtendenteChatWA({ fireToast }) {
     fetch(`${CONFIG.N8N_BASE}/webhook/brinkamais-conversas`)
       .then(r => r.json())
       .then(data => {
-        const mapped = data.map(c => ({
+        let rows = Array.isArray(data) ? data : [data];
+        const mapped = rows.map(c => ({
           id: c.numero,
           nome: c.nome || c.numero,
           numero: c.numero,
@@ -1075,10 +1077,11 @@ function AtendenteChatWA({ fireToast }) {
   // Buscar mensagens quando selecionar uma conversa
   useEffect(() => {
     if (ativa) {
-      fetch(`${CONFIG.N8N_BASE}/webhook/brinkamais-mensagens?numero=${ativa.numero}`)
+      fetch(`${CONFIG.N8N_BASE}/webhook/brinkamais-mensagens\?numero=\$\{ativa\.numero\}`)
         .then(r => r.json())
         .then(data => {
-          const mappedMsgs = data.map(m => ({
+          let rows = Array.isArray(data) ? data : [data];
+          const mappedMsgs = rows.map(m => ({
             id: m.id,
             dir: m.direcao === 'entrada' ? 'entrada' : 'saida',
             texto: m.conteudo,
