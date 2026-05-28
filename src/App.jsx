@@ -122,7 +122,7 @@ function useToast() {
    ============================================================ */
 function WAFloat() {
   return (
-    <a className="wa-float" href="https://wa.me/5500000000000?text=Olá!%20Vim%20pelo%20site%20Brinka%20Mais%20Festas!" target="_blank" rel="noreferrer" aria-label="WhatsApp">📱</a>
+    <a className="wa-float" href="https://wa.me/5511989553812?text=Olá!%20Vim%20pelo%20site%20Brinka%20Mais%20Festas!" target="_blank" rel="noreferrer" aria-label="WhatsApp">📱</a>
   );
 }
 
@@ -346,7 +346,7 @@ function PublicSite({ onGoLogin, onGoRegister }) {
             <p>Cadastre-se e solicite seu orçamento agora mesmo. Respondemos rapidinho!</p>
             <div className="pub-contact-btns">
               <button className="btn btn-outline btn-lg" onClick={onGoRegister} id="cta-btn-cadastro">📝 Cadastrar e Solicitar</button>
-              <a className="btn btn-green btn-lg" href="https://wa.me/5500000000000?text=Olá!%20Gostaria%20de%20um%20orçamento!" target="_blank" rel="noreferrer" id="cta-btn-wa">📱 WhatsApp Direto</a>
+              <a className="btn btn-green btn-lg" href="https://wa.me/5511989553812?text=Olá!%20Gostaria%20de%20um%20orçamento!" target="_blank" rel="noreferrer" id="cta-btn-wa">📱 WhatsApp Direto</a>
             </div>
           </div>
         </div>
@@ -371,7 +371,7 @@ function PublicSite({ onGoLogin, onGoRegister }) {
           <div className="pub-footer-col">
             <h4>Contato</h4>
             <ul>
-              <li><a href="https://wa.me/5500000000000" target="_blank" rel="noreferrer">📱 WhatsApp</a></li>
+              <li><a href="https://wa.me/5511989553812" target="_blank" rel="noreferrer">📱 WhatsApp</a></li>
               <li><a href="#">📸 Instagram</a></li>
               <li><a href="#">👍 Facebook</a></li>
             </ul>
@@ -583,7 +583,7 @@ function AppShell({ user, onLogout, navItems, activeTab, setActiveTab, children,
           </div>
           <div className="topbar-right">
             {topbarRight}
-            <a className="topbar-wa" href="https://wa.me/5500000000000" target="_blank" rel="noreferrer" id="topbar-wa">📱 WhatsApp</a>
+            <a className="topbar-wa" href="https://wa.me/5511989553812" target="_blank" rel="noreferrer" id="topbar-wa">📱 WhatsApp</a>
           </div>
         </header>
         <main className="app-content">{children}</main>
